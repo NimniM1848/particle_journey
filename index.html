@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>光子の旅 — Particle Journey</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:#05060d;color:#e8ecf7;overflow:hidden;
+    font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+  canvas{position:fixed;inset:0;display:block;touch-action:none;cursor:crosshair}
+  #hud{position:fixed;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;
+    font-size:12px;line-height:1.35;pointer-events:none;
+    background:linear-gradient(#05060dcc,#05060d00);padding:4px 4px 14px}
+  #hud3{position:fixed;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:12px;line-height:1.35;pointer-events:none;background:linear-gradient(#05060dcc,#05060d00);padding:4px 4px 14px}
+  #hud3 b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+  #hud3 span.k{color:#8f9ab8}
+  #hud,#hud2{position:fixed;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:12px;line-height:1.35;pointer-events:none;background:linear-gradient(#05060dcc,#05060d00);padding:4px 4px 14px}
+  #hud2 b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+  #hud2 span.k{color:#8f9ab8}
+  #hud b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+  #hud span.k{color:#8f9ab8}
+  #bar{position:fixed;left:12px;right:12px;bottom:14px;pointer-events:none;font-size:11px;color:#8f9ab8}
+  #bar .track{height:5px;border-radius:3px;background:#ffffff1a;margin:3px 0;overflow:hidden}
+  #bar .fill{height:100%;width:0;background:linear-gradient(90deg,#ffe3a8,#9ec8ff);border-radius:3px;transition:width .3s}
+  #bar .lbl{display:flex;justify-content:space-between}
+  #toast{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);max-width:min(92vw,460px);text-align:center;
+    background:#0b0e1ccc;border:1px solid #ffffff22;border-radius:10px;padding:8px 14px;font-size:13px;
+    opacity:0;transition:opacity .25s;pointer-events:none}
+  #toast.on{opacity:1}
+  #ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;
+    background:#05060dd9;backdrop-filter:blur(2px)}
+  #ov.on{display:flex}
+  .card{width:min(94vw,480px);max-height:92vh;overflow:auto;background:#0e1222;border:1px solid #ffffff22;
+    border-radius:16px;padding:20px 20px 18px}
+  .card h1{font-size:20px;margin:0 0 2px;letter-spacing:.02em}
+  .card .sub{color:#8f9ab8;font-size:12px;margin-bottom:12px}
+  .card p{font-size:13.5px;line-height:1.65;margin:8px 0}
+  .card ul{margin:8px 0;padding-left:1.2em;font-size:13px;line-height:1.65}
+  .note{font-size:12.5px;color:#b9c3dd;background:#ffffff0d;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.6}
+  .stats{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:13px;margin:10px 0}
+  .stats .k{color:#8f9ab8}
+  .score{text-align:center;background:#ffffff0d;border-radius:12px;padding:12px 10px;margin:10px 0}
+  .score .big{font-size:34px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .score .big small{font-size:14px;color:#8f9ab8;font-weight:500}
+  .score .rank{font-size:15px;font-weight:600;color:#ffe3a8;margin-top:2px}
+  .score .new{color:#9ec8ff}
+  .score .brk{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:12px;color:#b9c3dd;text-align:left;margin:10px 4px 0}
+  .score .brk span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums}
+  .score .best{font-size:11.5px;color:#8f9ab8;margin-top:8px}
+  button{font:inherit;font-size:15px;font-weight:600;color:#0b0e1c;background:linear-gradient(135deg,#ffe3a8,#9ec8ff);
+    border:0;border-radius:10px;padding:10px 20px;margin-top:12px;cursor:pointer;width:100%}
+  .tabs{display:flex;gap:8px;margin:6px 0 4px}.tabs button{margin-top:0;min-height:38px;font-size:13px;background:#ffffff14;color:#b9c3dd;padding:6px 8px}.tabs button.on{background:linear-gradient(135deg,#ffe3a8,#9ec8ff);color:#0b0e1c}
+  .dexh{font-size:12px;color:#8f9ab8;margin:12px 0 4px;text-align:left}
+  .dex{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{font-size:12px;padding:3px 9px;border-radius:99px;background:#ffffff10;color:#5d6788}
+  .chip.on{background:#9ec8ff26;color:#e8ecf7}
+  .chip small{color:#8f9ab8}
+
+  html,body{overscroll-behavior:none;touch-action:manipulation;height:100dvh}
+  .hint2{display:block;font-size:11.5px;font-weight:400;opacity:.72;margin-top:2px}
+  #ctl{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:min(94vw,460px);display:none;
+    background:#0e1222f2;border:1px solid #ffffff22;border-radius:14px;padding:8px 14px 12px;z-index:5}
+  #ctl.on{display:block}
+  #ctl label{display:block;font-size:12px;color:#b9c3dd;margin-top:6px}
+  #ctl b{color:#fff;font-weight:600}
+  #ctl input[type=range]{width:100%;height:34px;margin:2px 0 0}
+  #ctl button{margin-top:8px}
+  button{min-height:46px}
+  body.ctlon #toast{bottom:calc(var(--ctlh,250px) + 20px + env(safe-area-inset-bottom));z-index:6}
+  @media (orientation:landscape) and (max-height:560px){#ctl{left:auto;right:12px;transform:none;bottom:12px;width:min(40vw,360px)}body.ctlon #toast{left:28%;bottom:12px;max-width:52vw}}
+  #ov{padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
+  .card{overflow-anchor:none;max-height:92dvh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  #hud,#hud2,#hud3{top:max(8px,env(safe-area-inset-top));font-size:clamp(11px,3.1vw,13px)}
+  #bar{bottom:calc(14px + env(safe-area-inset-bottom))}
+  #toast{bottom:calc(62px + env(safe-area-inset-bottom))}
+  @media (max-width:420px){.card{padding:16px 14px 14px}.card h1{font-size:18px}.card p{font-size:13px}.note{font-size:12px}}
+  @media (max-height:520px){.card{padding:12px 16px}.card h1{font-size:16px}.card p,.card ul{font-size:12px;line-height:1.5;margin:4px 0}button{min-height:40px;padding:7px 16px;margin-top:8px}.stats{font-size:12px}}
+  button.sec{background:#ffffff1a;color:#e8ecf7;margin-top:8px;font-weight:500}
+  .lam{display:flex;align-items:center;gap:12px;margin:8px 0 4px}
+  .lam .sw{width:46px;height:46px;border-radius:10px;border:1px solid #ffffff33;flex:none}
+  .lam .nm{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .lam .bd{font-size:12.5px;color:#b9c3dd}
+  .spec{position:relative;display:flex;height:12px;border-radius:6px;margin:10px 2px 3px;background:#ffffff10}
+  .spec i{display:block;height:100%}
+  .spec .s1{width:6.7%;background:#3b1a66;border-radius:6px 0 0 6px}
+  .spec .s2{width:30.8%;background:linear-gradient(90deg,#6a00c8,#3355ff,#00c8ff,#3de06b,#ffe94d,#ff9a2e,#ff3b30)}
+  .spec .s3{width:62.5%;background:linear-gradient(90deg,#5a1410,#2a0c0c);border-radius:0 6px 6px 0}
+  .spec .mark{position:absolute;top:-5px;width:3px;height:22px;background:#fff;border-radius:2px;transform:translateX(-1.5px);box-shadow:0 0 6px #fff}
+  .speclbl{display:flex;font-size:10.5px;color:#8f9ab8;margin:0 2px 6px}
+  .speclbl span{text-align:center;white-space:nowrap}
+  .opt{border:1px solid #ffffff2a;background:#ffffff0a;border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer}
+  .opt:hover{background:#ffffff14;border-color:#9ec8ffaa}
+  .opt .t{font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .opt .rw{font-size:11.5px;color:#ffe3a8;font-weight:600}
+  .opt .s{font-size:12px;color:#8f9ab8;margin:2px 0 4px}
+  .opt .p{font-size:13px;margin-top:4px}
+  .opt .mini{font-size:11.5px;color:#b9c3dd;margin-top:2px}
+  .opt .curve{margin-top:4px;border-radius:6px;overflow:hidden;background:#0a0e1c}
+  .opt .lbls{display:flex;justify-content:space-between;font-size:10px;color:#6f7a98;margin-top:1px}
+  button:active{transform:scale(.98)}
+  #mute{position:fixed!important;right:10px;bottom:calc(58px + env(safe-area-inset-bottom));width:38px!important;min-width:0!important;height:38px;min-height:0!important;border-radius:50%;border:1px solid #ffffff33;background:#0e1222cc!important;color:#fff;font-size:18px;line-height:1;padding:0!important;margin:0!important;z-index:9;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ctl"></div>
+<div id="hud">
+  <div><span class="k">経過 </span><b id="hYears">–</b></div>
+  <div><span class="k">手数 </span><b id="hSteps">0</b> <span class="k">／散乱 </span><b id="hScat">0</b></div>
+  <div><span class="k">深さ </span><b id="hDepth">–</b></div>
+  <div><span class="k">周囲温度 </span><b id="hTemp">–</b></div>
+  <div style="grid-column:1/-1"><span class="k">光子エネルギー </span><b id="hE">–</b></div>
+  <div><span class="k">散乱確率 </span><b id="hSp">–</b></div>
+</div>
+<div id="hud2" style="display:none">
+  <div><span class="k">プレイ時間 </span><b id="h2Time">–</b></div>
+  <div><span class="k">いまの流れ </span><b id="h2Flow">–</b></div>
+  <div><span class="k">深さ </span><b id="h2Depth">–</b></div>
+  <div><span class="k">周囲温度 </span><b id="h2Temp">–</b></div>
+  <div style="grid-column:1/-1"><span class="k">光子エネルギー </span><b id="h2E">–</b></div>
+</div>
+<div id="hud3" style="display:none">
+  <div><span class="k">光子の波長 </span><b id="h3Lam">–</b></div>
+  <div><span class="k">状況 </span><b id="h3T">–</b></div>
+  <div><span class="k">光子エネルギー </span><b id="h3E">–</b></div>
+  <div><span class="k">降りた先 </span><b id="h3Site">–</b></div>
+</div>
+<div id="toast"></div>
+<div id="bar"><div class="lbl"><span id="lblL">核</span><span id="lblR">放射層の外縁（0.7 R☉）</span></div><div class="track"><div class="fill" id="fill"></div></div></div>
+<div id="ov"><div class="card" id="card"></div></div>
+<script>
+(function (root) {
+'use strict';
+const TAU = Math.PI * 2;
+const CFG = {
+  Rg: 1200,          // 放射層の外縁（ワールド単位）= 0.7 R☉
+  blobs: 100,        // 吸収域の数
+  blobRmin: 26, blobRmax: 52,
+  startClear: 150,
+  l0: 50, l1: 230,   // 歩幅（中心→外縁）
+  scatter0: 0.40, scatter1: 0.22
+};
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function prog(r) { return Math.min(1, r / CFG.Rg); }
+function stepLen(r) { const p = prog(r); return CFG.l0 + (CFG.l1 - CFG.l0) * Math.pow(p, 1.4); }
+function scatterProb(r) { const p = prog(r); return CFG.scatter0 + (CFG.scatter1 - CFG.scatter0) * p; }
+
+function genWorld(rng) {
+  const a = rng() * TAU, rr = rng() * 40;
+  const start = { x: Math.cos(a) * rr, y: Math.sin(a) * rr };
+  const blobs = []; let guard = 0;
+  while (blobs.length < CFG.blobs && guard++ < 100000) {
+    const r = CFG.Rg * Math.sqrt(rng()), t = rng() * TAU;
+    if (rng() > 1 - 0.7 * r / CFG.Rg) continue;      // 中心ほど濃い
+    const x = Math.cos(t) * r, y = Math.sin(t) * r;
+    if (Math.hypot(x - start.x, y - start.y) < CFG.startClear) continue;
+    blobs.push({ x, y, r: CFG.blobRmin + (CFG.blobRmax - CFG.blobRmin) * rng() });
+  }
+  return { start, blobs };
+}
+
+// 線分 (px,py)+s*(cos,sin), s∈[0,len] の最初のイベント（吸収域に入る or 外縁を出る）
+function firstEvent(px, py, ang, len, blobs) {
+  const dx = Math.cos(ang), dy = Math.sin(ang);
+  let best = null;
+  for (let i = 0; i < blobs.length; i++) {
+    const b = blobs[i];
+    const fx = px - b.x, fy = py - b.y;
+    const bb = fx * dx + fy * dy, c = fx * fx + fy * fy - b.r * b.r;
+    if (c <= 0) return { s: 0, type: 'blob', blob: b };
+    const disc = bb * bb - c; if (disc < 0) continue;
+    const s = -bb - Math.sqrt(disc);
+    if (s < 0 || s > len) continue;
+    if (!best || s < best.s) best = { s, type: 'blob', blob: b };
+  }
+  const b2 = px * dx + py * dy, c2 = px * px + py * py - CFG.Rg * CFG.Rg;
+  const se = -b2 + Math.sqrt(Math.max(0, b2 * b2 - c2));
+  if (se <= len && (!best || se < best.s)) best = { s: se, type: 'escape' };
+  return best;
+}
+
+// 3方向の候補。少なくとも1つは（散乱が起きなければ）安全な方向を含める
+function genCandidates(world, pos, rng) {
+  const r = Math.hypot(pos.x, pos.y), L = stepLen(r), out = Math.atan2(pos.y, pos.x);
+  let cands = null;
+  for (let k = 0; k < 40; k++) {
+    const base = out + (rng() * 2 - 1) * 1.2;
+    const angs = [base, base + TAU / 3 + (rng() - 0.5) * 0.6, base - TAU / 3 + (rng() - 0.5) * 0.6];
+    cands = angs.map(a => {
+      const ev = firstEvent(pos.x, pos.y, a, L, world.blobs);
+      return { ang: a, L, safe: !ev || ev.type === 'escape' };
+    });
+    if (cands.some(c => c.safe)) break;
+  }
+  return cands;
+}
+
+// 1手の結果。散乱が起きると途中で方向がランダムに変わる
+function resolveMove(world, pos, cand, rng) {
+  const sp = scatterProb(Math.hypot(pos.x, pos.y));
+  const scatter = rng() < sp;
+  const plan = [];
+  if (scatter) {
+    const f = 0.3 + 0.4 * rng();
+    plan.push({ ang: cand.ang, len: cand.L * f });
+    plan.push({ ang: rng() * TAU, len: cand.L * (1 - f) });
+  } else plan.push({ ang: cand.ang, len: cand.L });
+  const segs = []; let cx = pos.x, cy = pos.y, outcome = 'ok', blob = null;
+  for (let i = 0; i < plan.length; i++) {
+    const p = plan[i], ev = firstEvent(cx, cy, p.ang, p.len, world.blobs);
+    const s = ev ? ev.s : p.len;
+    const nx = cx + Math.cos(p.ang) * s, ny = cy + Math.sin(p.ang) * s;
+    segs.push({ x0: cx, y0: cy, x1: nx, y1: ny, len: s });
+    cx = nx; cy = ny;
+    if (ev) { outcome = ev.type === 'escape' ? 'escape' : 'dead'; blob = ev.blob || null; break; }
+  }
+  return { segs, scattered: scatter && segs.length > 1, outcome, end: { x: cx, y: cy }, blob };
+}
+
+// 周囲温度と光子エネルギー（概算）
+function tempMK(p) { return 15.7 * Math.pow(2.3 / 15.7, p); }
+function photonKeV(p) { return 0.2327 * tempMK(p); }
+
+const api = { CFG, TAU, mulberry32, prog, stepLen, scatterProb, genWorld, firstEvent, genCandidates, resolveMove, tempMK, photonKeV };
+if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PhotonCore = api;
+})(typeof self !== 'undefined' ? self : this);
+
+</script>
+<script>
+(function (root) {
+'use strict';
+const TAU = Math.PI * 2;
+const CFG2 = {
+  Hc: 3000,                               // 対流層の高さ（ワールド単位）= 0.71 R☉ → 光球
+  bandH: 600,                             // 5層構造（深いほど大きな対流セル）
+  lambdas: [560, 440, 340, 250, 180],     // セルの幅（深い層→表面近く）
+  drift: [18, 22, 26, 30, 34],            // セルが横にゆっくり動く速さ
+  A: 140,                                 // 上昇・下降の最大速さ
+  U: 70,                                  // 横方向の流れ
+  V0: 8,                                  // 平均してわずかに外向き
+  ctrl: 230                               // 光子の自力横移動の最大速さ
+};
+function smooth(f) { return f * f * (3 - 2 * f); }
+
+function newRun(rng) {
+  const phis = [], dirs = [];
+  for (let i = 0; i < 5; i++) { phis.push(rng() * TAU); dirs.push(rng() < 0.5 ? -1 : 1); }
+  return { x: 0, h: 0, t: 0, phis, dirs };
+}
+function theta(run, b, x, t) {
+  const k = TAU / CFG2.lambdas[b];
+  return k * (x - run.dirs[b] * CFG2.drift[b] * t) + run.phis[b];
+}
+// (x,h,t) での流れ。層の中心どうしを滑らかに補間する
+function field(run, x, h, t) {
+  const bh = CFG2.bandH, q = Math.min(4, Math.max(0, h / bh - 0.5));
+  const i = Math.min(3, Math.floor(q)), f = smooth(q - i);
+  let v = 0, u = 0;
+  const parts = [[i, 1 - f], [i + 1, f]];
+  for (const [b, w] of parts) {
+    if (w <= 0) continue;
+    const th = theta(run, b, x, t), s = Math.min(1, Math.max(0, (h - b * bh) / bh));
+    v += w * CFG2.A * Math.cos(th);
+    u += w * -CFG2.U * Math.sin(th) * Math.cos(Math.PI * s);
+  }
+  return { u, v: v + CFG2.V0 };
+}
+function step(run, ctrl, dt) {
+  const f = field(run, run.x, run.h, run.t);
+  run.x += (f.u + ctrl * CFG2.ctrl) * dt;
+  run.h = Math.max(0, run.h + f.v * dt);
+  run.t += dt;
+  return f;
+}
+function done(run) { return run.h >= CFG2.Hc; }
+
+// 周囲温度（概算）：2.3百万K → 約5,800K を深さに対して対数補間
+function tempK(h) { const p = Math.min(1, h / CFG2.Hc); return 2.3e6 * Math.pow(5800 / 2.3e6, p); }
+function photonEV(h) { return 2.7 * 8.617e-5 * tempK(h); }
+
+// 光球（約5,772K）の黒体放射から、放たれる光子の波長を1つ抽選（光子数ベース）
+function sampleWavelengthNm(rng) {
+  const T = 5772, hc_k = 1.4388e7; // nm·K
+  const pdf = l => Math.pow(l, -4) / (Math.exp(hc_k / (l * T)) - 1);
+  let m = 0; for (let l = 150; l <= 4000; l += 5) m = Math.max(m, pdf(l));
+  for (let n = 0; n < 10000; n++) { const l = 150 + rng() * 3850; if (rng() * m <= pdf(l)) return l; }
+  return 700;
+}
+const api = { CFG2, newRun, field, step, done, tempK, photonEV, sampleWavelengthNm, theta };
+if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PhotonCore2 = api;
+})(typeof self !== 'undefined' ? self : this);
+
+</script>
+<script>
+(function (root) {
+'use strict';
+const AM = 1.2;   // 既定の大気路程。実際は照準の精度から決まる（airmassFromB）
+// オゾン吸収断面積 [nm, cm²]（概算）。対数補間
+const O3 = [[200,3.2e-19],[210,8e-19],[220,3.1e-18],[230,6.5e-18],[240,9.6e-18],[250,1.12e-17],[260,1.12e-17],[270,8.6e-18],[280,4.0e-18],
+  [290,1.4e-18],[300,3.9e-19],[310,1.0e-19],[320,3.0e-20],[330,1.3e-20],[340,5e-21],[350,2e-21],[400,1e-22],[450,2e-22],[500,1.2e-21],
+  [600,5e-21],[700,1e-21],[800,1e-22],[1000,1e-23]];
+function o3sigma(l) {
+  if (l < 200) return 1e-17;        // 酸素などで完全に遮られる
+  if (l >= 1000) return 0;
+  for (let i = 1; i < O3.length; i++) if (l <= O3[i][0]) {
+    const a = O3[i - 1], b = O3[i], f = (l - a[0]) / (b[0] - a[0]);
+    return Math.exp(Math.log(a[1]) + f * (Math.log(b[1]) - Math.log(a[1])));
+  }
+  return 0;
+}
+const g = (l, c, w) => Math.exp(-0.5 * ((l - c) / w) ** 2);
+// 水蒸気（1 mmあたりの光学的厚さ）と、CO2・O2（気圧に比例）の吸収帯（概算）
+function h2o(l) {
+  let t = 0.02 * g(l, 720, 10) + 0.03 * g(l, 820, 12) + 0.18 * g(l, 940, 18) + 0.28 * g(l, 1130, 30) + 1.2 * g(l, 1380, 45)
+        + 2.5 * g(l, 1870, 70) + 3.0 * g(l, 2700, 150) + 1.5 * g(l, 3300, 300);
+  if (l > 2500) t += 0.8 * Math.min(1, (l - 2500) / 800);
+  return t;
+}
+function co2o2(l) { return 1.5 * g(l, 762, 4) + 0.05 * g(l, 1600, 20) + 0.5 * g(l, 2000, 25) + 0.5 * g(l, 2060, 25); }
+
+const SITES = [
+  { id: 'antarctic', name: '南極高原', sub: '標高3,200 m・極寒で超乾燥・オゾンホールの季節', alt: 3.2, pwv: 0.3, cloud: 0.25, o3: 150, aer: 0.01, eyeBonus: 1, rw: { ccd: 3, ir: 3, ground: 6, eye: 1 } },
+  { id: 'atacama', name: 'アタカマ高地', sub: '標高5,000 m・世界有数の晴天と乾燥', alt: 5.0, pwv: 1.0, cloud: 0.05, o3: 260, aer: 0.015, eyeBonus: 1, rw: { ccd: 5, ir: 3, ground: 3, eye: 1, panel: 1 } },
+  { id: 'city', name: '沿岸の大都市', sub: '海抜0 m・湿って曇りがち・人が大勢いる', alt: 0, pwv: 20, cloud: 0.4, o3: 320, aer: 0.12, eyeBonus: 4, rw: { eye: 4, panel: 4, ground: 4, ccd: 1, ir: 0.5, leaf: 1 } },
+  { id: 'ocean', name: '熱帯の海上', sub: '海抜0 m・水蒸気がとても多い', alt: 0, pwv: 32, cloud: 0.5, o3: 250, aer: 0.1, eyeBonus: 1, rw: { ground: 5, eye: 1, panel: 1, ccd: 0.5, ir: 0.3 } },
+  { id: 'sahara', name: 'サハラ砂漠', sub: '乾燥しているが砂塵が多い', alt: 0.4, pwv: 8, cloud: 0.08, o3: 280, aer: 0.25, eyeBonus: 1, rw: { ground: 6, panel: 3, eye: 1, ccd: 0.5, ir: 0.5 } },
+  { id: 'forest', name: '中緯度の森', sub: '緑の葉が広がる・やや湿潤', alt: 0.2, pwv: 14, cloud: 0.35, o3: 330, aer: 0.07, eyeBonus: 1.5, rw: { leaf: 6, ground: 3, eye: 1.5, panel: 0.5, ccd: 0.2, ir: 0.2 } }
+];
+// その日の天気（ランダム）。地点の値を一時的に書き換える
+const WEATHERS = [
+  { id: 'clear', name: '快晴', w: 42, note: '雲が少ない', fx: s => ({ ...s, cloud: s.cloud * 0.3 }) },
+  { id: 'thin', name: '薄雲', w: 20, note: '雲がやや増える', fx: s => ({ ...s, cloud: Math.min(0.95, s.cloud + 0.2) }) },
+  { id: 'overcast', name: '厚い雲', w: 12, note: '空一面の雲', fx: s => ({ ...s, cloud: 0.92 }) },
+  { id: 'dust', name: '黄砂・砂嵐', w: 8, note: '塵が空気中に多い', fx: s => ({ ...s, aer: s.aer + 0.35 }) },
+  { id: 'smoke', name: '山火事の煙', w: 6, note: '煙の粒子が増える', fx: s => ({ ...s, aer: s.aer + 0.5 }) },
+  { id: 'fog', name: '霧・高湿度', w: 8, note: '水蒸気と水滴が増える', fx: s => ({ ...s, pwv: s.pwv * 1.5, aer: s.aer + 0.1, cloud: Math.min(0.95, s.cloud + 0.15) }) },
+  { id: 'contrail', name: '飛行機雲', w: 6, note: '細い雲が横切る', fx: s => ({ ...s, cloud: Math.min(0.95, s.cloud + 0.1) }) },
+  { id: 'ozone', name: 'オゾンが濃い日', w: 5, note: '成層圏のオゾンが多い', fx: s => ({ ...s, o3: s.o3 * 1.3 }) },
+  { id: 'ozlow', name: 'オゾンが薄い日', w: 5, note: '成層圏のオゾンが少ない', fx: s => ({ ...s, o3: s.o3 * 0.65 }) }
+];
+const LAYERS = [
+  { id: 'o3', name: 'オゾン層', desc: '紫外線を吸収' },
+  { id: 'cloud', name: '雲', desc: '光を散乱・遮る' },
+  { id: 'gas', name: '水蒸気・CO₂・O₂', desc: '赤外線などの吸収帯' },
+  { id: 'scat', name: '空気分子・塵', desc: '短い波長ほど散乱' }
+];
+// 各層を通り抜ける確率
+function parts(site, l, am) {
+  am = am || AM;
+  const p = Math.exp(-site.alt / 8.4), lu = l / 1000;
+  const tauO3 = o3sigma(l) * site.o3 * 2.687e16 * am;
+  const tauR = 0.008569 * Math.pow(lu, -4) * (1 + 0.0113 * Math.pow(lu, -2) + 0.00013 * Math.pow(lu, -4)) * p, tauA = site.aer * Math.pow(lu, -1.3);
+  return {
+    o3: Math.exp(-tauO3),
+    cloud: 1 - site.cloud * (l < 2500 ? 0.6 : 1.0),
+    gas: Math.exp(-(site.pwv * h2o(l) + p * co2o2(l)) * am),
+    scat: Math.exp(-(tauR + tauA) * am)
+  };
+}
+function total(site, l, am) { const q = parts(site, l, am); return q.o3 * q.cloud * q.gas * q.scat; }
+
+const sig = x => 1 / (1 + Math.exp(-x));
+const DETECTORS = [
+  { id: 'eye', name: '人の目', sub: '見えた！ ― 感度は低いが価値は最大', reward: 5000, qe: l => 0.12 * g(l, 555, 50) },
+  { id: 'ccd', name: '望遠鏡のCCD', sub: '可視光〜近赤外（シリコン）', reward: 800, qe: l => 0.92 * sig((l - 350) / 25) * sig(-(l - 950) / 60) },
+  { id: 'ir', name: '赤外線カメラ', sub: '近赤外 900〜1,650 nm（InGaAs）', reward: 800, qe: l => 0.85 * sig((l - 900) / 25) * sig(-(l - 1650) / 30) },
+  { id: 'panel', name: '太陽光パネル', sub: '可視〜近赤外で発電（シリコン）', reward: 450, qe: l => 0.85 * sig((l - 330) / 35) * sig(-(l - 1080) / 35) },
+  { id: 'leaf', name: '植物の葉（光合成）', sub: '葉緑素が青〜赤の光を吸収', reward: 600, qe: l => 0.05 + 0.85 * sig((l - 390) / 12) * sig(-(l - 710) / 12) },
+  { id: 'ground', name: '地面・海面（熱になる）', sub: 'どんな光でも吸収される。価値は小さい', reward: 100, qe: l => 1.0 }
+];
+function detectProb(det, site, l) { return Math.min(1, det.qe(l) * (det.id === 'eye' ? site.eyeBonus : 1)); }
+function score(aim, layersPassed, det, detected) { return aim + layersPassed * 200 + (detected ? det.reward : 0); }
+function rankOf(s) { return s >= 5000 ? 'S' : s >= 1700 ? 'A' : s >= 1100 ? 'B' : 'C'; }
+// 照準の外れ具合 b（地球の円盤の中心=0、縁=1）→ 天頂角 → 大気路程
+function airmassFromB(b) { const c = Math.sqrt(Math.max(0.02, 1 - Math.min(0.99, Math.abs(b)) ** 2)); return Math.min(9, 1 / c); }
+function pickWeighted(list, wf, rng) { let s = 0; for (const x of list) s += wf(x); let r = rng() * s; for (const x of list) { r -= wf(x); if (r <= 0) return x; } return list[list.length - 1]; }
+function rollEnvironment(rng) {
+  const base = SITES[Math.floor(rng() * SITES.length)], weather = pickWeighted(WEATHERS, w => w.w, rng);
+  const site = { ...weather.fx(base), id: base.id, name: base.name, sub: base.sub, eyeBonus: base.eyeBonus };
+  const det = pickWeighted(DETECTORS, d => base.rw[d.id] || 0.0001, rng);
+  return { base, site, weather, det };
+}
+
+// 大気降下：各層で判定して、通り抜けた層の数と、最初に失敗した層を返す
+function descend(site, l, rng, am) {
+  const q = parts(site, l, am); const out = []; let passed = 0, failed = null;
+  for (const L of LAYERS) { const ok = rng() < q[L.id]; out.push({ id: L.id, p: q[L.id], ok }); if (ok) passed++; else { failed = L.id; break; } }
+  return { layers: out, passed, failed };
+}
+const api = { AM, SITES, WEATHERS, LAYERS, DETECTORS, parts, total, detectProb, score, rankOf, descend, airmassFromB, rollEnvironment, o3sigma, h2o, co2o2 };
+if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PhotonCore3 = api;
+})(typeof self !== 'undefined' ? self : this);
+
+// ニュートリノ編の純ロジック（描画なし）
+(function (root) {
+  // 太陽の反応ごとのニュートリノ。確率は「ゲーム用」に まれな反応（pep・8B）を実際より大きくしている
+  const REACTIONS = [
+    { id: 'pp', zone: 0.22, name: 'pp反応', eq: 'p + p → d + e⁺ + νe', w: 78, pee: 0.55, rare: 0, real: '約92%', note: '太陽のエネルギーの大半を生む反応。エネルギーが最も低い（最大0.42 MeV）。' },
+    { id: 'be7', zone: 0.18, name: '⁷Be反応', eq: '⁷Be + e⁻ → ⁷Li + νe', w: 14, pee: 0.53, rare: 150, real: '約7%', note: '単一エネルギー（0.862 MeV）の線スペクトルのニュートリノ。' },
+    { id: 'pep', zone: 0.15, name: 'pep反応', eq: 'p + e⁻ + p → d + νe', w: 3, pee: 0.45, rare: 300, real: '約0.2%', note: '1.44 MeV の単一エネルギー。ごくまれな反応。' },
+    { id: 'b8', zone: 0.1, name: '⁸B反応', eq: '⁸B → ⁸Be* + e⁺ + νe', w: 5, pee: 0.32, rare: 600, real: '約0.008%', note: '数 MeV〜15 MeV に達する高エネルギー。数は極端に少ないが、スーパーカミオカンデのような水チェレンコフ検出器で捉えやすい。' }
+  ];
+  const DETECTORS = [
+    { id: 'none', name: '岩盤・海・人体（何も捉えない）', place: '', w: 4, reward: 0 },
+    { id: 'sk', lat: 36.43, lon: 137.31, name: 'スーパーカミオカンデ', place: '岐阜県飛騨市・地下約1,000 m・超純水5万トン', w: 14, reward: 2500 },
+    { id: 'sno', lat: 46.47, lon: -81.2, name: 'SNO（重水検出器）', place: 'カナダ・地下約2,000 m・重水1,000トン', w: 8, reward: 3000 },
+    { id: 'bx', lat: 42.42, lon: 13.51, name: 'ボレクシーノ', place: 'イタリア・グランサッソ地下・液体シンチレータ', w: 16, reward: 2000 },
+    { id: 'ga', lat: 43.27, lon: 42.7, name: 'ガリウム検出器', place: 'ロシア・カフカース地下・ガリウム50トン級', w: 16, reward: 1500 },
+    { id: 'ice', lat: -90, lon: 0, name: 'アイスキューブ', place: '南極・氷の中の1 km³（TeV以上向け）', w: 4, reward: 0 }
+  ];
+  const CROSS = ['地殻', 'マントル', '外核（液体）', '内核（固体）'];
+  const CORE_R = [1, 0.895, 0.546, 0.19];                     // 各層に入る半径（地球半径=1）
+  function pick(list, rng) { let s = 0; for (const x of list) s += x.w; let r = rng() * s; for (const x of list) { r -= x.w; if (r <= 0) return x; } return list[list.length - 1]; }
+  function energyMeV(rx, rng) {
+    if (rx.id === 'pp') return Math.max(0.1, Math.min(0.42, 0.27 + (rng() + rng() + rng() - 1.5) * 0.12));
+    if (rx.id === 'be7') return 0.862; if (rx.id === 'pep') return 1.44;
+    return Math.max(2.5, Math.min(15, 6.5 + (rng() + rng() + rng() - 1.5) * 4));
+  }
+  function birth(rng) { const rx = pick(REACTIONS, rng); return { rx, E: energyMeV(rx, rng) }; }
+  // 太陽→地球の間に味（フレーバー）が変わる。到着時に電子型である確率 = pee（太陽内の物質効果＋真空中の振動の平均）
+  function flavorAtEarth(rx, rng, pee) { return rng() < (pee == null ? rx.pee : pee) ? 'e' : (rng() < 0.5 ? 'mu' : 'tau'); }
+  function detectProb(det, E, fl) {
+    const e = fl === 'e';
+    switch (det.id) {
+      case 'sk': return E < 3.5 ? 0 : 0.85 * (e ? 1 : 0.154);        // 電子との散乱：電子型の断面積は他の約6.5倍
+      case 'sno': return E < 2.2 ? 0 : 0.8;                          // 重水の中性カレント：全ての型に感度（振動の証拠）
+      case 'bx': return E < 0.19 ? 0 : 0.75 * (e ? 1 : 0.22);
+      case 'ga': return E < 0.233 ? 0 : (e ? 0.75 : 0);              // 電子型のみ（ニュートリノ捕獲）。pp も捉えられる
+      default: return 0;
+    }
+  }
+  function crossed(b) { return CORE_R.map(r => b < r); }
+  function score(aim, rx, nCross, det, detected) { return aim + rx.rare + nCross * 100 + (detected ? det.reward : 0); }
+  function rankOf(s) { return s >= 3300 ? 'S' : s >= 2700 ? 'A' : s >= 1000 ? 'B' : 'C'; }
+  // 太陽から見た地球の円盤への投影。h=太陽直下点の経度(rad)、dec=太陽の赤緯(rad)。x,y は地球半径=1、side>0 が昼側
+  function project(lat, lon, h, dec) {
+    const f = Math.PI / 180, la = lat * f, lo = lon * f, px = Math.cos(la) * Math.cos(lo), py = Math.cos(la) * Math.sin(lo), pz = Math.sin(la);
+    const sx = Math.cos(dec) * Math.cos(h), sy = Math.cos(dec) * Math.sin(h), sz = Math.sin(dec);
+    const e1x = -Math.sin(h), e1y = Math.cos(h), e2x = -Math.sin(dec) * Math.cos(h), e2y = -Math.sin(dec) * Math.sin(h), e2z = Math.cos(dec);
+    return { x: px * e1x + py * e1y, y: px * e2x + py * e2y + pz * e2z, side: px * sx + py * sy + pz * sz };
+  }
+  const HIT_R = 0.07;
+  // ===== 太陽内部の通り道 =====
+  const rhoSun = r => 150 * Math.exp(-10.54 * r);                      // 密度 g/cm³（r は太陽半径=1）。ゲーム用の近似
+  const N_CENTER = 150 * (1 - Math.exp(-10.54)) / 10.54;
+  function columnAlong(x0, y0, th) {                                   // (x0,y0) から向き th へ表面まで通る物質量（核から放射状に抜けた場合=1）
+    const dx = Math.cos(th), dy = Math.sin(th), b = x0 * dx + y0 * dy, c = x0 * x0 + y0 * y0 - 1, L = -b + Math.sqrt(Math.max(0, b * b - c));
+    let sum = 0; const n = 240; for (let i = 0; i < n; i++) { const t = (i + 0.5) / n * L; sum += rhoSun(Math.hypot(x0 + dx * t, y0 + dy * t)); }
+    return (sum * L / n) / N_CENTER;
+  }
+  function resonanceR(E) { return E > 2.3 ? Math.log(150 * E / 330) / 10.54 : null; }      // MSW共鳴が起きる半径。⁸Bなど高エネルギーだけ
+  function peePath(rx, m) { return Math.max(0.15, Math.min(0.85, rx.pee + 0.16 * (0.5 - m))); }
+  function pathScore(eps, m) { return Math.round(600 * Math.max(0, 1 - Math.abs(eps) / 0.35) + 600 * Math.max(0, 1 - m)); }
+  // ===== ニュートリノ振動（νμ → ντ 、2フレーバー近似）=====
+  const DM31 = 2.5e-3;
+  function pSurvive(Lkm, EGeV) { const x = 1.267 * DM31 * Lkm / EGeV; return 1 - Math.pow(Math.sin(x), 2); }
+  // 実際には E も向きもぼやけている（ビームのエネルギー幅・検出器の分解能）ので、幅 sig の範囲で平均した確率を使う
+  function pEff(Lkm, EGeV, sig) { let sw = 0, sp = 0; for (let i = -4; i <= 4; i++) { const w = Math.exp(-0.5 * Math.pow(i / 2, 2)); sw += w; sp += w * pSurvive(Lkm, EGeV * (1 + sig * i / 4 * 1.6)); } return sp / sw; }
+  function atmL(cosz) { const R = 6371, h = 15; return -R * cosz + Math.sqrt(R * R * cosz * cosz + 2 * R * h + h * h); }
+  // 超新星ニュートリノ（全フレーバー、10〜30 MeV）
+  const SN_FL = { ae: '反電子型', e: '電子型', x: 'ミュー／タウ型' };
+  function snDetect(det, fl) { return { sk: fl === 'ae' ? 0.9 : 0.4, sno: 0.8, bx: fl === 'ae' ? 0.7 : 0.3, ga: fl === 'e' ? 0.6 : 0, ice: 0.5 }[det.id] || 0; }
+  function snFlavor(rng) { const r = rng(); return r < 0.3 ? 'ae' : r < 0.5 ? 'e' : 'x'; }
+  const SOURCES = [
+    { id: 'sun', name: '太陽', sub: '核融合で生まれる。約8分で地球へ' },
+    { id: 'sn', name: '超新星爆発', sub: 'SN 1987A型。16.8万光年先から' },
+    { id: 'atm', name: '大気ニュートリノ', sub: '宇宙線が大気にぶつかって生まれる' },
+    { id: 'acc', name: '加速器ニュートリノ', sub: 'J-PARC から スーパーカミオカンデへ 295 km' }
+  ];
+  const api = { project, HIT_R, rhoSun, columnAlong, resonanceR, peePath, pathScore, pSurvive, pEff, atmL, SN_FL, snDetect, snFlavor, SOURCES, REACTIONS, DETECTORS, CROSS, CORE_R, pick, birth, flavorAtEarth, detectProb, crossed, score, rankOf };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PhotonCore4 = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+'use strict';
+const C = PhotonCore, TAU = C.TAU, Rg = C.CFG.Rg;
+const YEARS_PER_STEP = 2600;           // ゲーム内換算（約20手で約5万年）
+const $ = id => document.getElementById(id);
+const cv = $('c'); let ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  const d = Math.min(window.devicePixelRatio || 1, 2); if (d === DPR && W === innerWidth && H === innerHeight && cv.width) return;
+  DPR = d; W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';   // 表示倍率が1以外でも見た目サイズを画面に合わせる
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+// ---------- 効果音（WebAudioで合成。音声ファイルなし） ----------
+const SFX = (() => {
+  let ac = null, master = null, muted = false, drone = null;
+  try { muted = localStorage.getItem('photon_mute') === '1'; } catch (e) {}
+  const AC = window.AudioContext || window.webkitAudioContext;
+  function init() {
+    if (ac || !AC) { if (ac && ac.state === 'suspended') ac.resume(); return; }
+    try { ac = new AC(); master = ac.createGain(); master.gain.value = muted ? 0 : 1.0; const lim = ac.createDynamicsCompressor(); lim.threshold.value = -8; lim.ratio.value = 12; master.connect(lim); lim.connect(ac.destination); startDrone(); } catch (e) { ac = null; }
+  }
+  function startDrone() {
+    const g = ac.createGain(); g.gain.value = 0.008; g.connect(master);
+    [261.6, 392, 523.3].forEach((f, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 0.05 + i * 0.03; lg.gain.value = 0.003; l.connect(lg); lg.connect(g.gain); o.connect(g); o.start(); l.start(); });
+    drone = g;
+  }
+  function tone(f0, f1, dur, type, vol, delay) {
+    if (!ac || muted) return; const t = ac.currentTime + (delay || 0), o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.2, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(dur, f0, f1, vol, delay) {
+    if (!ac || muted) return; const t = ac.currentTime + (delay || 0), n = Math.floor(ac.sampleRate * dur), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(); src.buffer = b; const fl = ac.createBiquadFilter(); fl.type = 'bandpass'; fl.Q.value = 1.2; fl.frequency.setValueAtTime(f0, t); fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.2, t + dur * 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(fl); fl.connect(g); g.connect(master); src.start(t); src.stop(t + dur);
+  }
+  const arp = (notes, step, type, vol) => notes.forEach((f, i) => tone(f, f, 0.35, type || 'triangle', vol || 0.16, i * step));
+  const S = {
+    click: () => tone(720, 540, 0.07, 'sine', 0.12),
+    step: () => tone(300 + Math.random() * 60, 220, 0.09, 'sine', 0.1),
+    scatter: () => { tone(1500, 900, 0.12, 'triangle', 0.1); noise(0.1, 3000, 1200, 0.08); },
+    absorb: () => { tone(330, 70, 0.7, 'sawtooth', 0.12); noise(0.5, 900, 120, 0.12); },
+    escape: () => arp([523, 659, 784, 1047, 1319], 0.09, 'triangle', 0.17),
+    chime: () => arp([659, 988, 1319], 0.12, 'sine', 0.15),
+    whoosh: () => { noise(0.9, 300, 3200, 0.22); tone(180, 700, 0.9, 'sine', 0.05); },
+    shimmer: () => { for (let i = 0; i < 6; i++) tone(900 + i * 220 + Math.random() * 100, 1200 + i * 200, 0.5, 'sine', 0.05, i * 0.12); },
+    rumble: () => { noise(1.4, 260, 140, 0.08); tone(130, 90, 1.4, 'sine', 0.05); },
+    pass: () => tone(520, 780, 0.16, 'triangle', 0.14),
+    fail: () => { tone(260, 90, 0.5, 'sawtooth', 0.12); noise(0.3, 700, 200, 0.1); },
+    win: () => arp([523, 659, 784, 1047], 0.1, 'triangle', 0.18),
+    dull: () => { tone(330, 220, 0.4, 'sine', 0.1); tone(247, 165, 0.5, 'sine', 0.08, 0.15); },
+    fanfare: () => { arp([523, 659, 784], 0.12, 'triangle', 0.18); arp([1047], 0.1, 'triangle', 0.2); tone(1047, 1047, 0.8, 'sine', 0.12, 0.36); }
+  };
+  function play(n) { try { init(); if (S[n]) S[n](); } catch (e) {} }
+  function setMuted(m) { muted = m; try { localStorage.setItem('photon_mute', m ? '1' : '0'); } catch (e) {} if (master) master.gain.value = m ? 0 : 1.0; }
+  return { play, init, setMuted, isMuted: () => muted };
+})();
+const sfx = n => SFX.play(n);
+(function () {
+  const b = document.createElement('button'); b.id = 'mute'; b.type = 'button'; b.setAttribute('aria-label', '音のオン・オフ');
+  const set = () => { b.textContent = SFX.isMuted() ? '🔇' : '🔊'; };
+  b.onclick = e => { e.stopPropagation(); SFX.init(); SFX.setMuted(!SFX.isMuted()); set(); if (!SFX.isMuted()) sfx('click'); };
+  set(); document.body.appendChild(b);
+  document.addEventListener('pointerdown', () => SFX.init(), { once: false, passive: true });
+  document.addEventListener('click', e => { const t = e.target; if (t && t.closest && t.closest('button') && t.id !== 'mute') sfx('click'); }, true);
+})();
+
+// 背景キャッシュ：動かない背景（星・天体）を1回だけ描いて使い回す。毎フレームの描画負荷を下げ、スマホでの画質低下を防ぐ
+let _bg = null;
+function bgCache(key, fn) {
+  const k = key + '|' + W + 'x' + H + '|' + DPR;
+  if (!_bg || _bg.k !== k) {
+    const o = document.createElement('canvas'); o.width = Math.round(W * DPR); o.height = Math.round(H * DPR);
+    const c2 = o.getContext('2d'); c2.setTransform(DPR, 0, 0, DPR, 0, 0); const keep = ctx; ctx = c2;
+    try { fn(); } finally { ctx = keep; } _bg = { k, o };
+  }
+  ctx.drawImage(_bg.o, 0, 0, W, H);
+}
+let _glow = null;
+function drawGlow(x, y, r) {
+  if (!_glow) { const o = document.createElement('canvas'); o.width = o.height = 128; const c2 = o.getContext('2d'), g = c2.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(160,240,255,0.95)'); g.addColorStop(0.4, 'rgba(100,220,255,0.4)'); g.addColorStop(1, 'rgba(100,220,255,0)'); c2.fillStyle = g; c2.fillRect(0, 0, 128, 128); _glow = o; }
+  ctx.drawImage(_glow, x - r, y - r, r * 2, r * 2);
+}
+
+// 背景のプラズマ粒（見た目のみ）
+const dust = (() => {
+  const r = C.mulberry32(12345), a = [];
+  for (let i = 0; i < 1500; i++) { const rr = Rg * 1.08 * Math.sqrt(r()), t = r() * TAU;
+    a.push({ x: Math.cos(t) * rr, y: Math.sin(t) * rr, s: 0.6 + r() * 1.6, a: 0.06 + r() * 0.2 }); }
+  return a;
+})();
+
+let G = { state: 'title' };
+let cam = { x: 0, y: 0 }, effects = [], toastTimer = 0, hover = -1, lastT = 0;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function photonColor(p) { return [lerp(235, 140, p) | 0, lerp(244, 170, p) | 0, 255]; }
+function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+function angDiff(a, b) { return ((a - b + Math.PI) % TAU + TAU) % TAU - Math.PI; }
+
+function newGame() {
+  resetJ(); setStage(1);
+  const seed = (Math.random() * 4294967296) >>> 0;
+  const rng = C.mulberry32(seed), world = C.genWorld(rng);
+  G = { state: 'choose', rng, world, pos: { ...world.start }, steps: 0, scatters: 0, years: 0,
+        path: [{ x: world.start.x, y: world.start.y }], cands: [], anim: null };
+  cam.x = G.pos.x; cam.y = G.pos.y; effects = []; hover = -1;
+  G.cands = C.genCandidates(world, G.pos, rng);
+  $('ov').classList.remove('on'); updateHud();
+  toast('金色の矢印の向き（外側）がゴール。3つの方向から選んで、放射層の外縁をめざそう（クリック／タップ、または 1・2・3）', 5200);
+}
+
+function toast(msg, ms) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms || 2600);
+}
+
+function updateHud() {
+  if (!G.pos) return;
+  const r = Math.hypot(G.pos.x, G.pos.y), p = C.prog(r), E = C.photonKeV(p);
+  $('hYears').textContent = '約 ' + (Math.round(G.years / 100) * 100).toLocaleString() + ' 年';
+  $('hSteps').textContent = G.steps; $('hScat').textContent = G.scatters;
+  $('hDepth').textContent = (p * 0.7).toFixed(2) + ' R☉';
+  $('hTemp').textContent = '約 ' + C.tempMK(p).toFixed(1) + ' 百万K';
+  $('hE').textContent = '約 ' + E.toFixed(2) + ' keV（' + (E >= 1 ? '硬X線' : '軟X線') + '）';
+  $('hSp').textContent = Math.round(C.scatterProb(r) * 100) + '%';
+  $('fill').style.width = (p * 100).toFixed(1) + '%';
+}
+
+function pick(i) {
+  if (G.state !== 'choose' || !G.cands[i]) return;
+  const res = C.resolveMove(G.world, G.pos, G.cands[i], G.rng);
+  const pts = [{ x: G.pos.x, y: G.pos.y }]; let total = 0;
+  res.segs.forEach(s => { pts.push({ x: s.x1, y: s.y1 }); total += s.len; });
+  G.anim = { res, pts, total, t: 0, dur: 380 + total * 1.2, scatterFired: false };
+  sfx('step'); G.cands = []; G.state = 'moving'; G.steps++; G.years += YEARS_PER_STEP;
+  updateHud();
+}
+
+function headPos(anim, s) {         // 進行距離 s での位置
+  let acc = 0;
+  for (let i = 0; i < anim.res.segs.length; i++) {
+    const sg = anim.res.segs[i];
+    if (s <= acc + sg.len || i === anim.res.segs.length - 1) {
+      const u = sg.len > 0 ? Math.min(1, (s - acc) / sg.len) : 1;
+      return { x: lerp(sg.x0, sg.x1, u), y: lerp(sg.y0, sg.y1, u) };
+    }
+    acc += sg.len;
+  }
+}
+
+function finishMove() {
+  const a = G.anim, res = a.res;
+  res.segs.forEach((s, i) => G.path.push({ x: s.x1, y: s.y1, sc: res.scattered && i === 0 }));
+  G.pos = { ...res.end }; G.anim = null;
+  if (res.scattered) G.scatters++;
+  updateHud();
+  if (res.outcome === 'dead') {
+    sfx('absorb'); G.state = 'dead'; effects.push({ x: G.pos.x, y: G.pos.y, t: 0, kind: 'absorb' });
+    setTimeout(() => showResult(false), 900);
+  } else if (res.outcome === 'escape') {
+    sfx('escape'); G.state = 'won'; effects.push({ x: G.pos.x, y: G.pos.y, t: 0, kind: 'escape' });
+    setTimeout(() => showResult(true), 900);
+  } else {
+    G.state = 'choose'; G.cands = C.genCandidates(G.world, G.pos, G.rng);
+  }
+}
+
+const FACTS = [
+  '光子のエネルギーは「いま居る場所の温度」で決まります。外へ向かうほど周囲が冷えるので、光子もエネルギーを失っていきます（内側へ戻ると温度が高い場所に戻ります）。',
+  '太陽中心で生まれたガンマ線・X線の光子は、実際には何度も吸収・再放射されます。「同じ1個の光子の旅」はゲーム用の簡略化です。',
+  '太陽の中心から表面までの脱出は、一般に数万年〜10万年程度と見積もられます（見積もりには幅があります）。',
+  '外側ほど密度が下がるので、散乱の間に進める距離（平均自由行程）が長くなります。ゲームの歩幅が伸びていくのはこのためです。'
+];
+function calcScore() {
+  const clear = 1000, speed = Math.max(0, 40 - G.steps) * 40, total = clear + speed;
+  const rank = total >= 1920 ? 'S' : total >= 1800 ? 'A' : total >= 1560 ? 'B' : 'C';   // 17手以内=S／20手以内=A／26手以内=B
+  return { clear, speed, total, rank };
+}
+function showResult(win) {
+  const r = Math.hypot(G.pos.x, G.pos.y), p = C.prog(r), E = C.photonKeV(p);
+  const years = (Math.round(G.years / 100) * 100).toLocaleString();
+  const fact = FACTS[(Math.random() * FACTS.length) | 0];
+  let sc = null, best = 0, isNew = false;
+  if (win) {
+    sc = calcScore(); J.s1 = sc.total; J.r1 = sc.rank;
+    try { best = +localStorage.getItem('photon_best_v2') || 0; if (sc.total > best) { isNew = best > 0; localStorage.setItem('photon_best_v2', String(sc.total)); best = sc.total; } } catch (e) { best = 0; }
+  }
+  $('card').innerHTML = win ? `
+    <h1>放射層を抜けた！</h1><div class="sub">ステージ1 クリア</div>
+    <p>核から約0.7 R☉の外縁まで到達しました。ここから先は、熱がプラズマの対流で運ばれる<b>対流層</b>（ステージ2）です。</p>
+    <div class="score"><div class="big">${sc.total.toLocaleString()}<small> pts</small></div><div class="rank">ランク ${sc.rank}${isNew ? '　<span class="new">NEW RECORD!</span>' : ''}</div>
+      <div class="brk"><span>クリア</span><span>+${sc.clear}</span><span>スピード（40手−手数）×40</span><span>+${sc.speed}</span></div>
+      ${best ? `<div class="best">この端末でのベスト：${best.toLocaleString()} pts</div>` : ''}</div>
+    <div class="stats"><span class="k">手数</span><span>${G.steps}</span><span class="k">散乱された回数</span><span>${G.scatters}</span>
+    <span class="k">経過（ゲーム内換算）</span><span>約 ${years} 年</span><span class="k">光子エネルギー</span><span>約 ${E.toFixed(2)} keV（まだX線）</span></div>
+    <div class="note"><b>補足</b>　${fact}</div>
+    <button id="next2">ステージ2へ進む（対流層）</button><button id="again" class="sec">もう一度、別の太陽へ</button>` : `
+    <h1>吸収された…</h1><div class="sub">光子のエネルギーは周囲のプラズマの熱になった</div>
+    <p>${G.steps}手目、密度の高い領域で吸収されました。新しい光子として、また中心から生まれ直します。</p>
+    <div class="stats"><span class="k">到達した深さ</span><span>${(p * 0.7).toFixed(2)} R☉</span><span class="k">散乱された回数</span><span>${G.scatters}</span>
+    <span class="k">経過（ゲーム内換算）</span><span>約 ${years} 年</span></div>
+    <div class="note"><b>補足</b>　${fact}</div>
+    <button id="again">生まれ直す</button>`;
+  $('ov').classList.add('on'); $('again').onclick = newGame;
+  if ($('next2')) $('next2').onclick = startStage2;
+}
+
+function showTitle() {
+  $('card').innerHTML = `<h1>光子の旅</h1><div class="sub" style="letter-spacing:.18em;font-size:13px">Particle Journey</div>
+    <p>太陽の中心で生まれた光子になって、地球をめざす旅です。</p>
+    <button id="pickP" style="min-height:64px;font-size:17px;margin-top:14px">光子で旅する<span class="hint2">太陽の中心から表面まで約10万年。散乱と吸収をくぐり抜ける</span></button>
+    <button id="dex0" class="sec">図鑑</button>
+    <div style="margin-top:18px;padding-top:12px;border-top:1px dashed #ffffff22;text-align:center">
+      <button id="pickN" class="sec" style="min-height:34px;font-size:12px;font-weight:400;padding:6px 14px;margin-top:0;background:transparent;border:1px solid #ffffff22;color:#9aa6c4">おまけ：ニュートリノの運試し</button>
+    </div>`;
+  $('ov').classList.add('on'); $('pickP').onclick = showPhotonMenu; $('pickN').onclick = showNeutrinoMenu; $('dex0').onclick = () => showDex(showTitle);
+}
+function showPhotonMenu() {
+  $('card').innerHTML = `
+    <h1>光子の旅</h1><div class="sub">太陽の中心から ― 3つのステージ</div>
+    <p>あなたは太陽の核で生まれたX線の光子。まわりのプラズマにぶつかりながら、外へ外へと向かいます。</p>
+    <ul>
+      <li>分かれ道で<b>進む方向を3つから選ぶ</b></li>
+      <li>ときどき<b>散乱</b>されて、途中で向きがランダムに変わる</li>
+      <li>暗い<b>吸収域</b>に入るとゲームオーバー</li>
+      <li>外側ほど歩幅が伸びる。放射層の外縁がゴール</li>
+    </ul>
+    <div class="note"><b>補足</b>　実際の脱出には数万年かかります。ここでは時間を圧縮し、「経過」は1手あたり約2,600年の換算で表示しています。</div>
+    <button id="start">はじめる</button><button id="start2" class="sec">ステージ2（対流層）から始める</button><button id="start3" class="sec">ステージ3（太陽系→地球）から始める</button><button id="back0" class="sec">もどる</button>`;
+  $('ov').classList.add('on'); $('start').onclick = newGame; $('start2').onclick = () => { resetJ(); startStage2(); }; $('start3').onclick = () => { resetJ(); startStage3(); }; $('back0').onclick = showTitle;
+}
+
+// ---------- 入力 ----------
+const LABEL_OFF = 20, LABEL_R = 16, HIT_R = 34;
+function labelPos(c, P) { const d = c.L * S + LABEL_OFF; return { x: P.x + Math.cos(c.ang) * d, y: P.y + Math.sin(c.ang) * d }; }
+function candAt(mx, my) {
+  if (!G.cands || !G.cands.length) return -1;
+  const P = { x: sx(G.pos.x), y: sy(G.pos.y) };
+  let bi = -1, bd = 1e9;
+  G.cands.forEach((c, i) => { const l = labelPos(c, P), d = Math.hypot(mx - l.x, my - l.y); if (d < bd) { bd = d; bi = i; } });
+  if (bd <= HIT_R) return bi;                        // 番号ボタンの近く
+  const ang = Math.atan2(my - P.y, mx - P.x); bd = 9; // それ以外は向きで選ぶ
+  G.cands.forEach((c, i) => { const d = Math.abs(angDiff(c.ang, ang)); if (d < bd) { bd = d; bi = i; } });
+  return bi;
+}
+function onPointer(e) {
+  if (G.state !== 'choose') return;
+  const i = candAt(e.clientX, e.clientY); hover = i; pick(i);
+}
+cv.addEventListener('pointermove', e => { if (G.state === 'choose') hover = candAt(e.clientX, e.clientY); });
+cv.addEventListener('pointerdown', onPointer);
+cv.addEventListener('click', onPointer);              // 念のための保険（pick は二重実行されない）
+window.__photon = () => ({ state: G.state, cands: G.cands, pos: G.pos, steps: G.steps });
+addEventListener('keydown', e => {
+  if (stage !== 1) return;
+  if (G.state === 'choose' && '123'.includes(e.key) && e.key) pick(+e.key - 1);
+  if ((e.key === 'r' || e.key === 'R') && G.state !== 'title') newGame();
+});
+
+// ---------- 描画 ----------
+function sx(x) { return W / 2 + (x - cam.x) * S; }
+function sy(y) { return H / 2 + (y - cam.y) * S; }
+let S = 1;
+
+function draw(dt) {
+  S = Math.min(W, H) / 700; if (S < 0.5) S = 0.5;
+  ctx.fillStyle = '#05060d'; ctx.fillRect(0, 0, W, H);
+  if (!G.world) { drawIdle(); return; }
+
+  // カメラ追従
+  const hp = G.state === 'moving' && G.anim ? headPos(G.anim, G.anim.total * G.anim.e) : G.pos;
+  const k = Math.min(1, dt * 0.009);
+  cam.x += (hp.x - cam.x) * k; cam.y += (hp.y - cam.y) * k;
+
+  const ox = sx(0), oy = sy(0), R = Rg * S;
+  // 太陽（放射層）
+  let g = ctx.createRadialGradient(ox, oy, 0, ox, oy, R);
+  g.addColorStop(0, 'rgba(255,214,150,0.55)'); g.addColorStop(0.55, 'rgba(230,120,60,0.30)'); g.addColorStop(1, 'rgba(130,50,30,0.30)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ox, oy, R, 0, TAU); ctx.fill();
+  // 外側（対流層の方向）
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(ox, oy, R, 0, TAU, true); ctx.clip('evenodd');
+  ctx.fillStyle = 'rgba(40,20,60,0.35)'; ctx.fillRect(0, 0, W, H); ctx.restore();
+  ctx.setLineDash([10, 8]); ctx.strokeStyle = 'rgba(255,200,140,0.7)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(ox, oy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+
+  // プラズマ粒
+  for (const d of dust) {
+    const x = sx(d.x), y = sy(d.y); if (x < -4 || x > W + 4 || y < -4 || y > H + 4) continue;
+    ctx.fillStyle = `rgba(255,235,210,${d.a})`; ctx.fillRect(x, y, d.s, d.s);
+  }
+
+  // 吸収域
+  for (const b of G.world.blobs) {
+    const x = sx(b.x), y = sy(b.y), r = b.r * S;
+    if (x < -r - 4 || x > W + r + 4 || y < -r - 4 || y > H + r + 4) continue;
+    const gg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    gg.addColorStop(0, 'rgba(8,4,20,0.95)'); gg.addColorStop(0.75, 'rgba(20,8,40,0.85)'); gg.addColorStop(1, 'rgba(90,40,150,0.35)');
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(190,140,255,0.55)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  }
+
+  const rNow = Math.hypot(hp.x, hp.y), col = photonColor(C.prog(rNow));
+
+  // 軌跡
+  ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  ctx.strokeStyle = rgba(col, 0.55); ctx.beginPath();
+  G.path.forEach((p, i) => i ? ctx.lineTo(sx(p.x), sy(p.y)) : ctx.moveTo(sx(p.x), sy(p.y)));
+  if (G.state === 'moving' && G.anim) {
+    const a = G.anim; let acc = 0, s = a.total * a.e;
+    ctx.lineTo(sx(G.pos.x), sy(G.pos.y));
+    for (const sg of a.res.segs) {
+      if (s <= 0) break;
+      const u = Math.min(1, s / Math.max(sg.len, 1e-6));
+      ctx.lineTo(sx(lerp(sg.x0, sg.x1, u)), sy(lerp(sg.y0, sg.y1, u))); s -= sg.len; acc += sg.len;
+    }
+  }
+  ctx.stroke();
+  ctx.strokeStyle = rgba(col, 0.9); ctx.lineWidth = 1.5;
+  G.path.forEach(p => { if (p.sc) { ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), 5, 0, TAU); ctx.stroke(); } });
+
+  // 外向き方向のヒント
+  if (G.state === 'choose') {
+    const out = Math.atan2(G.pos.y, G.pos.x), px = sx(G.pos.x), py = sy(G.pos.y);
+    ctx.fillStyle = 'rgba(255,220,170,0.45)'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('外へ', px + Math.cos(out) * 46, py + Math.sin(out) * 46 + 4);
+  }
+
+  // ゴール案内：画面の端に「外側（ゴール）」の向きを常に表示
+  if (G.state === 'choose' || G.state === 'moving') {
+    const out = Math.atan2(hp.y, hp.x), ux = Math.cos(out), uy = Math.sin(out), pulse = 0.65 + 0.3 * Math.sin(performance.now() / 350);
+    const tx = (W / 2 - 34) / Math.max(1e-6, Math.abs(ux)), ty = ((uy < 0 ? H / 2 - 110 : H / 2 - 74)) / Math.max(1e-6, Math.abs(uy)), t = Math.min(tx, ty);
+    const ax = W / 2 + ux * t, ay = H / 2 + uy * t, remain = Math.max(0, Math.round((1 - rNow / Rg) * 100));
+    ctx.save(); ctx.translate(ax, ay); ctx.rotate(out);
+    ctx.fillStyle = `rgba(255,214,120,${pulse})`; ctx.shadowColor = 'rgba(255,200,100,0.9)'; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-10, -13); ctx.lineTo(-3, 0); ctx.lineTo(-10, 13); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle = 'rgba(255,224,160,0.95)'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
+    const lx = Math.max(100, Math.min(W - 100, ax - ux * 46)), ly = Math.max(100, Math.min(H - 84, ay - uy * 46));
+    ctx.fillText('外側がゴール', lx, ly - 2); ctx.font = '11px sans-serif'; ctx.fillStyle = 'rgba(255,224,160,0.8)'; ctx.fillText(`放射層の外縁まで あと約${remain}%`, lx, ly + 13);
+  }
+
+  // 候補の矢印
+  if (G.state === 'choose') {
+    const px = sx(G.pos.x), py = sy(G.pos.y);
+    G.cands.forEach((c, i) => {
+      const ex = px + Math.cos(c.ang) * c.L * S, ey = py + Math.sin(c.ang) * c.L * S, on = i === hover;
+      ctx.strokeStyle = on ? rgba(col, 1) : 'rgba(255,255,255,0.45)'; ctx.lineWidth = on ? 3 : 1.6;
+      ctx.setLineDash(on ? [] : [7, 6]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+      const ah = 9, a = c.ang;
+      ctx.fillStyle = ctx.strokeStyle; ctx.beginPath();
+      ctx.moveTo(ex + Math.cos(a) * 2, ey + Math.sin(a) * 2);
+      ctx.lineTo(ex - Math.cos(a - 0.5) * ah, ey - Math.sin(a - 0.5) * ah);
+      ctx.lineTo(ex - Math.cos(a + 0.5) * ah, ey - Math.sin(a + 0.5) * ah); ctx.fill();
+      const lx = ex + Math.cos(a) * LABEL_OFF, ly = ey + Math.sin(a) * LABEL_OFF;
+      ctx.fillStyle = on ? rgba(col, 1) : 'rgba(10,12,28,0.85)'; ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(lx, ly, LABEL_R, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = on ? '#0b0e1c' : '#fff'; ctx.font = '600 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(i + 1, lx, ly + 5);
+    });
+  }
+
+  // 光子本体
+  if (G.state !== 'dead') {
+    const x = sx(hp.x), y = sy(hp.y);
+    const gl = ctx.createRadialGradient(x, y, 0, x, y, 26);
+    gl.addColorStop(0, rgba(col, 0.95)); gl.addColorStop(0.25, rgba(col, 0.45)); gl.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, y, 26, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.fill();
+  }
+
+  // エフェクト
+  effects = effects.filter(e => (e.t += dt) < 900);
+  for (const e of effects) {
+    const u = e.t / 900, x = sx(e.x), y = sy(e.y);
+    const c = e.kind === 'absorb' ? [255, 110, 70] : e.kind === 'escape' ? [255, 240, 180] : col;
+    ctx.strokeStyle = rgba(c, 1 - u); ctx.lineWidth = 3 * (1 - u) + 1;
+    ctx.beginPath(); ctx.arc(x, y, 8 + u * (e.kind === 'scatter' ? 40 : 90), 0, TAU); ctx.stroke();
+    if (e.kind !== 'scatter') { ctx.fillStyle = rgba(c, 0.35 * (1 - u)); ctx.fill(); }
+  }
+}
+
+function drawIdle() {
+  const t = performance.now() / 1000;
+  for (let i = 0; i < 60; i++) { const x = (i * 97 + t * 8) % W, y = (i * 53 + Math.sin(t + i) * 10 + 400) % H;
+    ctx.fillStyle = 'rgba(255,230,200,0.25)'; ctx.fillRect(x, y, 2, 2); }
+}
+
+function frame(t) {
+  const dt = Math.min(50, t - lastT); lastT = t;
+  if (stage === 2) { s2Frame(dt); requestAnimationFrame(frame); return; }
+  if (stage === 3) { s3Frame(dt); requestAnimationFrame(frame); return; }
+  if (G.state === 'moving' && G.anim) {
+    const a = G.anim; a.t += dt; const u = Math.min(1, a.t / a.dur);
+    a.e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    if (a.res.scattered && !a.scatterFired && a.total * a.e >= a.res.segs[0].len) {
+      a.scatterFired = true; sfx('scatter'); effects.push({ x: a.res.segs[0].x1, y: a.res.segs[0].y1, t: 0, kind: 'scatter' });
+      toast('散乱！ 向きがランダムに変わった', 1400);
+    }
+    if (u >= 1) finishMove();
+  }
+  if (G.anim) { /* 移動中の深さ表示も更新 */ const h = headPos(G.anim, G.anim.total * (G.anim.e || 0)); const keep = G.pos; G.pos = h; updateHud(); G.pos = keep; }
+  draw(dt); requestAnimationFrame(frame);
+}
+// ================= ステージ2：対流層（縦スクロールの流れ乗り） =================
+const D2 = PhotonCore2, K2 = D2.CFG2;
+let stage = 1, T = null;
+const keys = { l: false, r: false }, ptr = { down: false, x: 0 };
+const offc = document.createElement('canvas'), offx = offc.getContext('2d');
+
+function setStage(n) {
+  stage = n;
+  $('hud').style.display = n === 1 ? 'grid' : 'none'; $('hud2').style.display = n === 2 ? 'grid' : 'none'; $('hud3').style.display = n === 3 ? 'grid' : 'none';
+  $('lblL').textContent = n === 1 ? '核' : n === 2 ? '対流層の底（0.71 R☉）' : '太陽（光球）';
+  $('lblR').textContent = n === 1 ? '放射層の外縁（0.7 R☉）' : n === 2 ? '光球（1.0 R☉）' : '観測者';
+  $('fill').style.width = '0%';
+}
+function S2() { return Math.max(0.5, Math.min(W, H) / 700); }
+
+function spawnPart(anywhere) {
+  const s = S2(), run = T.run, hw = W / (2 * s) * 1.15, up = 0.36 * H / s * 1.15, dn = 0.64 * H / s * 1.15;
+  return { x: run.x + (Math.random() * 2 - 1) * hw, h: run.h + (anywhere ? (Math.random() * (up + dn) - dn) : (Math.random() * up * 0.2 - dn)), u: 0, v: 0 };
+}
+function chev(x, y, ang, size, alpha) {   // 進行方向 ang を向くシェブロン（>）
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.strokeStyle = `rgba(255,255,255,${alpha})`; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(-size * 0.5, -size); ctx.lineTo(size * 0.5, 0); ctx.lineTo(-size * 0.5, size); ctx.stroke(); ctx.restore();
+}
+function startStage2() {
+  const seed = (Math.random() * 4294967296) >>> 0, rng = C.mulberry32(seed);
+  setStage(2);
+  T = { rng, run: D2.newRun(rng), state: 'play', time: 0, movedT: 0, downTime: 0, trail: [], parts: [], fx: [], lam: 0, flow: 0, ctrl: 0 };
+  for (let i = 0; i < 380; i++) T.parts.push(spawnPart(true));
+  effects = []; $('ov').classList.remove('on'); updateHud2();
+}
+window.__s2 = () => T && ({ state: T.state, run: T.run, time: T.time });
+
+function fmtTemp(K) { return K >= 1e6 ? (K / 1e6).toFixed(2) + ' 百万K' : K >= 1e4 ? (K / 1e4).toFixed(1) + ' 万K' : Math.round(K / 10) * 10 + ' K'; }
+function bandOfEV(E) { return E >= 124 ? 'X線' : E >= 10 ? '極端紫外線' : E >= 3.1 ? '紫外線' : E >= 1.65 ? '可視光' : '赤外線'; }
+function updateHud2() {
+  const run = T.run, h = Math.min(run.h, K2.Hc), E = D2.photonEV(h), v = T.flow;
+  $('h2Time').textContent = T.time.toFixed(1) + ' 秒';
+  $('h2Depth').textContent = (0.71 + 0.29 * h / K2.Hc).toFixed(3) + ' R☉';
+  $('h2Temp').textContent = '約 ' + fmtTemp(D2.tempK(h));
+  $('h2E').textContent = '約 ' + (E >= 1000 ? (E / 1000).toFixed(2) + ' keV' : E >= 100 ? Math.round(E) + ' eV' : E.toFixed(1) + ' eV') + '（' + bandOfEV(E) + '）';
+  $('h2Flow').textContent = v > 30 ? '↑ 上昇流' : v < -30 ? '↓ 下降流' : '― 弱い流れ';
+  $('h2Flow').style.color = v > 30 ? '#ffe3a8' : v < -30 ? '#9ec8ff' : '#fff';
+  $('fill').style.width = (100 * h / K2.Hc).toFixed(1) + '%';
+}
+
+function s2Frame(dtMs) {
+  const sc = window.__timeScale || 1, d0 = Math.min(dtMs, 50) / 1000 * sc;
+  if (T.state === 'play') {
+    let ctrl = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
+    if (!ctrl && ptr.down) ctrl = Math.max(-1, Math.min(1, (ptr.x - W / 2) / 90));
+    T.ctrl = ctrl; if (ctrl) T.movedT += d0; let dt = d0;
+    while (dt > 1e-6) {
+      const d = Math.min(dt, 1 / 60), f = D2.step(T.run, ctrl, d); dt -= d; T.time += d; T.flow = f.v; if (f.v < -30) T.downTime += d;
+      if (D2.done(T.run)) { finishStage2(); break; }
+    }
+    T.trail.push({ x: T.run.x, h: T.run.h }); if (T.trail.length > 170) T.trail.shift();
+    updateHud2();
+  }
+  // 流れの可視化用の粒
+  const s = S2(), run = T.run, hw = W / (2 * s) * 1.2, upH = 0.36 * H / s * 1.2, dnH = 0.64 * H / s * 1.2;
+  for (let i = 0; i < T.parts.length; i++) {
+    let p = T.parts[i];
+    const f = D2.field(run, p.x, p.h, run.t); p.u = f.u; p.v = f.v;
+    p.x += f.u * d0 * 0.9; p.h += f.v * d0 * 0.9;
+    if (Math.abs(p.x - run.x) > hw || p.h < run.h - dnH || p.h > run.h + upH || p.h < 0 || p.h > K2.Hc) T.parts[i] = spawnPart(true);
+  }
+  T.fx = T.fx.filter(e => (e.t += dtMs) < 1400);
+  drawStage2();
+}
+
+function drawStage2() {
+  const s = S2(), run = T.run, px = W / 2, py = H * 0.64;
+  const X = x => px + (x - run.x) * s, Y = h => py - (h - run.h) * s;
+  const yTop = Y(K2.Hc), yBot = Y(0);
+  ctx.fillStyle = '#05060d'; ctx.fillRect(0, 0, W, H);
+  // 層の背景（深い→表面でだんだん明るく）
+  const g = ctx.createLinearGradient(0, yBot, 0, yTop);
+  g.addColorStop(0, '#3a0d08'); g.addColorStop(0.5, '#a8431c'); g.addColorStop(1, '#ffe7b0');
+  ctx.fillStyle = g; ctx.fillRect(0, yTop, W, yBot - yTop);
+  if (yBot < H) { ctx.fillStyle = '#1a0907'; ctx.fillRect(0, yBot, W, H - yBot); }
+  // 流れ（低解像度で計算して滑らかに拡大）
+  const cw = Math.ceil(W / 10), ch = Math.ceil(H / 10);
+  if (offc.width !== cw || offc.height !== ch) { offc.width = cw; offc.height = ch; }
+  const img = offx.createImageData(cw, ch), dat = img.data;
+  for (let j = 0; j < ch; j++) {
+    const sy_ = j * 10 + 5, h = run.h + (py - sy_) / s; if (h < 0 || h > K2.Hc) continue;
+    for (let i = 0; i < cw; i++) {
+      const x = run.x + (i * 10 + 5 - px) / s, f = D2.field(run, x, h, run.t), o = (j * cw + i) * 4, a = Math.min(1, Math.abs(f.v) / K2.A);
+      if (f.v > 0) { dat[o] = 255; dat[o + 1] = 222; dat[o + 2] = 140; dat[o + 3] = 150 * a; }
+      else { dat[o] = 25; dat[o + 1] = 10; dat[o + 2] = 70; dat[o + 3] = 175 * a; }
+    }
+  }
+  offx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(offc, 0, 0, cw * 10, ch * 10);
+  // 光球の輝き
+  if (yTop > -60 && yTop < H + 60) {
+    const gg = ctx.createLinearGradient(0, yTop - 60, 0, yTop); gg.addColorStop(0, 'rgba(255,245,210,0)'); gg.addColorStop(1, 'rgba(255,245,210,0.55)');
+    ctx.fillStyle = gg; ctx.fillRect(0, yTop - 60, W, 60);
+    ctx.strokeStyle = 'rgba(255,250,230,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yTop); ctx.lineTo(W, yTop); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,250,230,0.9)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('光球（約5,800 K）— ここで光は宇宙へ出られる', 10, yTop - 8);
+  }
+  if (yBot > 0 && yBot < H) {
+    ctx.strokeStyle = 'rgba(255,170,120,0.6)'; ctx.setLineDash([8, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, yBot); ctx.lineTo(W, yBot); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,200,160,0.75)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('対流層の底（放射層との境）', 10, yBot + 16);
+  }
+  // 粒の流線
+  ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  for (const p of T.parts) {
+    const x = X(p.x), y = Y(p.h), len = 0.07 * s;
+    ctx.strokeStyle = p.v > 0 ? 'rgba(255,248,215,0.55)' : 'rgba(150,185,255,0.5)';
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - p.u * len, y + p.v * len); ctx.stroke();
+  }
+  // 軌跡
+  const col = [lerp(140, 255, run.h / K2.Hc) | 0, lerp(170, 226, run.h / K2.Hc) | 0, lerp(255, 170, run.h / K2.Hc) | 0], n = T.trail.length;
+  ctx.lineWidth = 2.2;
+  for (let i = 1; i < n; i++) { ctx.strokeStyle = rgba(col, 0.55 * i / n); ctx.beginPath(); ctx.moveTo(X(T.trail[i - 1].x), Y(T.trail[i - 1].h)); ctx.lineTo(X(T.trail[i].x), Y(T.trail[i].h)); ctx.stroke(); }
+  // 光子
+  const gl = ctx.createRadialGradient(px, py, 0, px, py, 28);
+  gl.addColorStop(0, rgba(col, 0.95)); gl.addColorStop(0.3, rgba(col, 0.45)); gl.addColorStop(1, rgba(col, 0));
+  ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(px, py, 28, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, 4.5, 0, TAU); ctx.fill();
+  if (T.state === 'play' && T.ctrl) {                       // 操作の向きを小さく表示
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); const d = Math.sign(T.ctrl);
+    ctx.moveTo(px + d * 26, py); ctx.lineTo(px + d * 18, py - 5); ctx.lineTo(px + d * 18, py + 5); ctx.fill();
+  }
+  if (T.state === 'play' && T.movedT < 0.7) {                // 最初だけ「左右に動こう」の案内
+    const gy = H * 0.8, tt = performance.now() / 1000, fade = 1 - T.movedT / 0.7;
+    ctx.textAlign = 'center'; ctx.fillStyle = `rgba(5,6,13,${0.55 * fade})`; ctx.beginPath(); ctx.roundRect(W / 2 - 170, gy - 34, 340, 68, 18); ctx.fill();
+    for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { const ph = ((tt * 1.4 - i * 0.28) % 1 + 1) % 1; chev(W / 2 + sd * (66 + i * 22 + ph * 6), gy - 8, sd > 0 ? 0 : Math.PI, 9, (0.25 + 0.65 * Math.sin(ph * Math.PI)) * fade); }
+    ctx.fillStyle = `rgba(255,255,255,${0.95 * fade})`; ctx.font = '600 15px sans-serif'; ctx.fillText('左右に動こう', W / 2, gy - 4);
+    ctx.fillStyle = `rgba(255,255,255,${0.7 * fade})`; ctx.font = '11px sans-serif'; ctx.fillText('画面の左右を押し続けて、明るい上昇流に乗ろう（←→キーでも）', W / 2, gy + 18);
+  }
+  for (const e of T.fx) { const u = e.t / 1400; ctx.strokeStyle = `rgba(255,248,220,${1 - u})`; ctx.lineWidth = 3 * (1 - u) + 1; ctx.beginPath(); ctx.arc(px, py, 10 + u * 160, 0, TAU); ctx.stroke(); }
+}
+
+function wl2rgb(l) {
+  let r = 0, g = 0, b = 0;
+  if (l < 440) { r = -(l - 440) / 60; b = 1; } else if (l < 490) { g = (l - 440) / 50; b = 1; } else if (l < 510) { g = 1; b = -(l - 510) / 20; }
+  else if (l < 580) { r = (l - 510) / 70; g = 1; } else if (l < 645) { r = 1; g = -(l - 645) / 65; } else { r = 1; }
+  const f = l < 420 ? 0.3 + 0.7 * (l - 380) / 40 : l > 700 ? 0.3 + 0.7 * (750 - l) / 50 : 1;
+  return [r, g, b].map(v => Math.round(255 * Math.pow(Math.max(0, v) * f, 0.8)));
+}
+function finishStage2() {
+  sfx('chime'); T.state = 'finish'; T.lam = D2.sampleWavelengthNm(T.rng); T.fx.push({ t: 0 });
+  toast('光球に到達！ 光子が宇宙へ放たれる…', 1500);
+  setTimeout(showResult2, 1400);
+}
+const FACTS2 = [
+  '対流層では、熱は光ではなくプラズマの流れ（対流）に乗って運ばれます。放射層で数万年かかった旅が、桁違いに短い時間で済みます。',
+  '中心の約3.7 keVの光子1個が持っていたエネルギーは、表面の約1.4 eVの光子およそ2,700個ぶんに当たります（概算）。エネルギーは捨てられるのではなく、数の多い低エネルギーの光子に分かれて出てきます。',
+  '光球は「光がやっと外へ出られる層」です。ここより内側は不透明で、外側は光がほぼ素通りします。私たちが見ている太陽の「表面」はこの層です。',
+  '表面近くの対流セル（粒状斑）は小さく、深いところほど大きなセルになる、という構造をゲームの層の幅に反映しています。'
+];
+function showResult2() {
+  const t = T.time, score = Math.round(1000 + Math.max(0, 80 - t) * 20), rank = score >= 2040 ? 'S' : score >= 1800 ? 'A' : score >= 1400 ? 'B' : 'C';
+  let best = 0, isNew = false;
+  try { best = +localStorage.getItem('photon_best2') || 0; if (score > best) { isNew = best > 0; localStorage.setItem('photon_best2', String(score)); best = score; } } catch (e) { best = 0; }
+  const l = T.lam, band = l < 380 ? '紫外線（目には見えない）' : l <= 750 ? '可視光' : l <= 1400 ? '近赤外線（目には見えない）' : '赤外線（目には見えない）';
+  const rgb = l >= 380 && l <= 750 ? wl2rgb(l) : [90, 90, 100], pos = Math.max(0, Math.min(100, (l - 300) / 1200 * 100));
+  const fact = FACTS2[(Math.random() * FACTS2.length) | 0];
+  J.s2 = score; J.r2 = rank; J.lam = l; const fresh2 = dexAdd([['band', BAND_NAMES.indexOf(lamBand(l)) < 0 ? '赤外線' : lamBand(l), lamBand(l)]]);
+  $('card').innerHTML = `
+    <h1>光球に到達！</h1><div class="sub">ステージ2 クリア ― 対流層を抜けた</div>
+    <div class="score"><div class="big">${score.toLocaleString()}<small> pts</small></div><div class="rank">ランク ${rank}${isNew ? '　<span class="new">NEW RECORD!</span>' : ''}</div>
+      <div class="brk"><span>クリア</span><span>+1000</span><span>スピード（80秒−時間）×20</span><span>+${score - 1000}</span></div>
+      ${best ? `<div class="best">この端末でのベスト：${best.toLocaleString()} pts</div>` : ''}</div>
+    <p>光子は、光球で黒体放射の分布から<b>波長を1つ抽選</b>されて、宇宙へ放たれました。</p>
+    <div class="lam"><div class="sw" style="background:rgb(${rgb})"></div><div><div class="nm">${Math.round(l)} nm</div><div class="bd">${band}</div></div></div>
+    <div class="spec"><i class="s1"></i><i class="s2"></i><i class="s3"></i><b class="mark" style="left:${pos}%"></b></div>
+    <div class="speclbl"><span style="width:6.7%">紫外</span><span style="width:30.8%">可視光</span><span style="width:62.5%">赤外線 →</span></div>
+    <div class="stats"><span class="k">プレイ時間</span><span>${t.toFixed(1)} 秒</span><span class="k">下降流で押し戻された時間</span><span>${T.downTime.toFixed(1)} 秒</span></div>
+    <div class="note"><b>補足</b>　${fact}<br>この波長は、ステージ3（地球の大気）で効きます。</div>${newNote(fresh2)}
+    <button id="to3">ステージ3へ進む（太陽系 → 地球）</button><button id="again2" class="sec">もう一度ステージ2</button><button id="toS1" class="sec">ステージ1から</button>`;
+  $('ov').classList.add('on'); $('again2').onclick = startStage2; $('toS1').onclick = newGame; $('to3').onclick = () => startStage3(T.lam);
+}
+
+addEventListener('keydown', e => {
+  if (stage !== 2) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.l = true; e.preventDefault(); }
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.r = true; e.preventDefault(); }
+  if ((e.key === 'r' || e.key === 'R') && T.state !== 'finish') startStage2();
+});
+addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.l = false;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.r = false;
+});
+cv.addEventListener('pointerdown', e => { ptr.down = true; ptr.x = e.clientX; });
+cv.addEventListener('pointermove', e => { ptr.x = e.clientX; });
+addEventListener('pointerup', () => { ptr.down = false; });
+addEventListener('pointercancel', () => { ptr.down = false; });
+addEventListener('blur', () => { ptr.down = false; keys.l = keys.r = false; });
+
+// ================= ステージ3：太陽系の照準ゲーム → 地球の大気（ランダム環境） =================
+const D4 = PhotonCore4, D3 = PhotonCore3, LAY_Y = [0.30, 0.46, 0.62, 0.76], GROUND_Y = 0.87, LIGHT_SEC = 499, FLIGHT = 3.0;
+let T3 = null;
+const stars3 = (() => { const r = C.mulberry32(777), a = []; for (let i = 0; i < 140; i++) a.push({ x: r(), y: r(), s: 0.5 + r() * 1.4, a: 0.2 + r() * 0.6 }); return a; })();
+
+function lamBand(l) { return l < 380 ? '紫外線' : l <= 750 ? '可視光' : l <= 1400 ? '近赤外線' : '赤外線'; }
+function photonRGB(l) { return l >= 380 && l <= 750 ? wl2rgb(l).map(v => Math.max(70, v)) : l < 380 ? [175, 125, 255] : [255, 95, 75]; }
+const pc = x => Math.round(x * 100) + '%';
+
+// ---- 太陽系の幾何（画面サイズに応じて毎フレーム計算） ----
+function geom() {
+  const R1 = H * 0.76, hr = Math.asin(Math.min(0.9, 0.46 * W / R1));
+  return { cx: W / 2, y0: H * 0.80 - R1, R1, hr, rE: Math.max(18, Math.min(W, H) * 0.062), cen: Math.PI / 2 };
+}
+function polar(g, r, phi) { return { x: g.cx + r * Math.cos(phi), y: g.y0 + r * Math.sin(phi) }; }
+// 見える範囲を往復せず一方向に流れる角度（端でラップ）。速さ speed[rad/s]、正で右向き
+function sweepU(g, speed, phase, t) { const range = 2 * g.hr; return (((phase * range + speed * t) % range) + range) % range / range; }
+function sweepPhi(g, speed, phase, t) { return g.cen + g.hr - sweepU(g, speed, phase, t) * 2 * g.hr; }
+function earthSpeed(g) { return T3 && T3.far ? 0 : 0.78 * g.rE / g.R1; }          // 光が着くまでの間に 地球半径の約2.3倍 動く（実際の比率：29.8 km/s × 499 s ÷ 6,371 km ≈ 2.3）
+function earthPos(g, t) { return polar(g, g.R1, sweepPhi(g, earthSpeed(g), T3.w.e, t)); }
+function moonPos(g, t) { const e = earthPos(g, t), a = 1.4 * t + T3.w.m * TAU; return { x: e.x + 2.2 * g.rE * Math.cos(a), y: e.y + 2.2 * g.rE * Math.sin(a) }; }
+function planetPos(g, which, t) { const r = which === 'mercury' ? 0.387 : 0.723, sp = which === 'mercury' ? 0.09 : 0.05, ph = which === 'mercury' ? T3.w.me : T3.w.v; return polar(g, g.R1 * r, sweepPhi(g, sp, ph, t)); }
+function cometState(g, t) { const phi = sweepPhi(g, -0.032, T3.w.c, t), r = g.R1 * T3.w.cr; return { phi, r, head: polar(g, r, phi), len: g.R1 * 0.28, half: Math.max(13, g.rE * 0.55) }; }
+function inTail(g, c, P) {
+  const dx = P.x - g.cx, dy = P.y - g.y0, r = Math.hypot(dx, dy), phi = Math.atan2(dy, dx);
+  if (r < c.r || r > c.r + c.len) return false;
+  const taper = 0.35 + 0.65 * (1 - (r - c.r) / c.len);
+  return Math.abs(Math.atan2(Math.sin(phi - c.phi), Math.cos(phi - c.phi))) * r <= c.half * taper;
+}
+
+// 現在の向きで撃った場合のコースを予測する（惑星・月は確定、彗星の尾は確率）
+function predictFlight(g, a) {
+  const t0 = T3.tw, n = 100; let tail = false, comet = false;
+  for (let k = 1; k <= n; k++) {
+    const f = k / n, rho = g.R1 * f, t = t0 + FLIGHT * f, P = polar(g, rho, a);
+    const mp = planetPos(g, 'mercury', t), vp = planetPos(g, 'venus', t);
+    if (Math.hypot(P.x - mp.x, P.y - mp.y) <= 9) return { kind: 'mercury', at: P };
+    if (Math.hypot(P.x - vp.x, P.y - vp.y) <= 12) return { kind: 'venus', at: P };
+    const ep = earthPos(g, t); if (Math.hypot(P.x - ep.x, P.y - ep.y) < 4 * g.rE) { const mo = moonPos(g, t); if (Math.hypot(P.x - mo.x, P.y - mo.y) <= 11) return { kind: 'moon', at: P }; }
+    if (inTail(g, cometState(g, t), P)) { if (!tail) comet = true; tail = true; } else tail = false;
+  }
+  const P = polar(g, g.R1, a), ep = earthPos(g, t0 + FLIGHT);
+  const hit = Math.hypot(P.x - ep.x, P.y - ep.y) <= g.rE + 4;
+  return { kind: comet ? 'comet' : hit ? 'hit' : 'miss', at: P };
+}
+function setStatus(s) { $('h3T').textContent = s; }
+function updateHud3() {
+  if (T3.nu) return updateHudNu();
+  const l = T3.lam;
+  $('h3Lam').textContent = Math.round(l) + ' nm（' + lamBand(l) + '）';
+  $('h3E').textContent = '約 ' + (1239.84 / l).toFixed(2) + ' eV';
+  $('h3Site').textContent = T3.env && T3.state !== 'aim' && T3.state !== 'flight' && T3.state !== 'lost' ? T3.env.site.name : '―';
+  const prog = { aim: 0.1, flight: 0.3, lost: 0.3, arrive: 0.5, descent: 0.5 + 0.1 * Math.min(4, T3.shown), final: 1, dead: 1 }[T3.state] || 0.1;
+  $('fill').style.width = (prog * 100).toFixed(1) + '%';
+}
+
+function initWorld() {
+  const r = T3.rng;
+  T3.w = { e: r(), m: r(), me: r(), v: r(), c: r(), cr: 0.45 + 0.12 * r() };
+}
+function startStage3(lamIn) {
+  const rng = C.mulberry32((Math.random() * 4294967296) >>> 0), lam = lamIn || D2.sampleWavelengthNm(rng);
+  setStage(3); hud3Labels(false);
+  T3 = { rng, lam, state: 'aim', tw: 0, misses: 0, aimA: Math.PI / 2, aimSet: false, ft: 0, fx: [], env: null, res: null, b: 0, am: 1, tail: false, shown: 0, i: 0, ph: 'move', pt: 0, py: 0.06, y0: 0.06, clouds: [], fired: null };
+  initWorld(); effects = []; $('ov').classList.remove('on'); setStatus('照準中'); updateHud3();
+  toast('地球は動いています。破線のリングが「光が着くころの地球」。向きを決めて、離す（クリック）と発射！', 5200);
+}
+window.__s3 = () => T3 && ({ state: T3.state, lam: T3.lam, tw: T3.tw, g: geom(), w: T3.w, aim: T3.aimA });
+window.__s3ep = (lead) => { const g = geom(), e = earthPos(g, T3.tw + (lead === undefined ? FLIGHT : lead)); return { x: e.x, y: e.y }; };
+
+function aimClamp(a) { const g = geom(); return Math.max(g.cen - g.hr - 0.1, Math.min(g.cen + g.hr + 0.1, a)); }
+function setAimFromPointer(x, y) { const g = geom(); T3.aimA = aimClamp(Math.atan2(y - g.y0, x - g.cx)); T3.aimSet = true; }
+function fire() {
+  if (!T3 || T3.state !== 'aim' || !T3.aimSet) return;
+  sfx('whoosh'); T3.state = 'flight'; T3.ft = 0; T3.tail = false; T3.fired = { a: T3.aimA }; T3.trail = []; setStatus('飛行中'); updateHud3();
+}
+cv.addEventListener('pointermove', e => { if (stage === 3 && T3 && T3.state === 'aim') setAimFromPointer(e.clientX, e.clientY); });
+cv.addEventListener('pointerdown', e => { if (stage === 3 && T3 && T3.state === 'aim') setAimFromPointer(e.clientX, e.clientY); });
+cv.addEventListener('pointerup', e => { if (stage === 3 && T3 && T3.state === 'aim') { setAimFromPointer(e.clientX, e.clientY); fire(); } });
+addEventListener('keydown', e => {
+  if (stage !== 3 || !T3 || T3.state !== 'aim') return;
+  if (e.key === 'ArrowLeft') { T3.aimA = aimClamp(T3.aimA + 0.012); T3.aimSet = true; e.preventDefault(); }
+  if (e.key === 'ArrowRight') { T3.aimA = aimClamp(T3.aimA - 0.012); T3.aimSet = true; e.preventDefault(); }
+  if (e.key === ' ' || e.key === 'Enter') { T3.aimSet = true; fire(); e.preventDefault(); }
+});
+
+// ---- 失敗（太陽系） ----
+const LOST_TEXT = {
+  miss: ['地球を外れた…', '光は何にも当たらず、宇宙の彼方へ飛んでいきました。光が地球に着くまで約8分、その間に地球は公転で動きます。動く距離＝速さ×時間。代入すると 29.8 km/s × 499 s ≈ 14,900 km、地球の半径（6,371 km）の約2.3個分です。この先読み（光行差）が必要になります。'],
+  mercury: ['水星に遮られた', '水星の前を通った光は、惑星の本体に遮られました（水星の太陽面通過のように、惑星は太陽の前を横切ることがあります）。'],
+  venus: ['金星に遮られた', '金星の本体に遮られました。金星の太陽面通過は100年に2回ほどしか起きない珍しい現象です。'],
+  moon: ['月に遮られた', '地球の手前で、月の陰に入りました。これが日食です。月が太陽の光を遮る現象が、光子から見ればこの失敗にあたります。'],
+  comet: ['彗星の尾の塵で散乱された', '彗星の尾はガスと塵でできていて、太陽と反対向きにのびます。塵が光を散乱するので、尾の中を通る光は一部が進行方向を変えられます。']
+};
+function loseInSpace(kind) {
+  T3.state = 'lost'; T3.lostKind = kind; T3.misses++; setStatus('見失った');
+  T3.fx.push({ x: T3.px, y: T3.py_, t: 0, kind: 'fail', abs: true }); sfx('fail');
+  setTimeout(showLost, 1300);
+}
+function showLost() {
+  if (T3.nu) return showLostNu();
+  const [h, f] = LOST_TEXT[T3.lostKind]; const fresh = dexAdd([['loss', T3.lostKind, LOSS_NAMES[T3.lostKind]]]);
+  $('card').innerHTML = `
+    <h1>${h}</h1><div class="sub">ステージ3 ― 光子は宇宙へ消えた</div>
+    <p>太陽は全方向に光を出しているので、地球に届く光子はごくわずかです。同じ波長（${Math.round(T3.lam)} nm）の別の光子で、もう一度ねらえます。</p>
+    <div class="stats"><span class="k">ここまでの失敗</span><span>${T3.misses} 回</span></div>
+    <div class="note"><b>補足</b>　${f}</div>${newNote(fresh)}
+    <button id="retry3">もう一度ねらう</button><button id="new3" class="sec">新しい光子で（ステージ1から）</button>`;
+  $('ov').classList.add('on');
+  $('retry3').onclick = () => { T3.state = 'aim'; T3.aimSet = false; initWorld(); T3.fx = []; $('ov').classList.remove('on'); setStatus('照準中'); updateHud3(); };
+  $('new3').onclick = newGame;
+}
+
+// ---- 地球に命中 → 環境をランダムに決める ----
+function arrive(b) {
+  T3.b = b; T3.am = D3.airmassFromB(b); T3.env = D3.rollEnvironment(T3.rng); T3.state = 'arrive'; T3.at = 0;
+  T3.fx.push({ x: T3.px, y: T3.py_, t: 0, kind: 'ok', abs: true }); sfx('pass'); setStatus('地球に到着'); updateHud3();
+  toast(`命中！ 照準のずれ ${(b * 100).toFixed(0)}%（入射角 ${(Math.asin(Math.min(0.99, b)) * 180 / Math.PI).toFixed(0)}°）`, 2200);
+}
+function startDescent() {
+  const env = T3.env, site = env.site;
+  T3.res = D3.descend(site, T3.lam, T3.rng, T3.am); T3.state = 'descent'; T3.i = 0; T3.ph = 'move'; T3.pt = 0; T3.shown = 0; T3.py = 0.06; T3.y0 = 0.06;
+  T3.clouds = []; const r = C.mulberry32(99);
+  for (let k = 0; k < Math.round(site.cloud * 26) + 1; k++) T3.clouds.push({ x: r(), y: 0.40 + r() * 0.12, w: 40 + r() * 60 });
+  setStatus('大気を降下中'); updateHud3();
+}
+
+const REASON = {
+  o3: ['オゾン層に吸収された', '波長が約300 nmより短い紫外線は、オゾン層でほとんど吸収されます。生き物が紫外線から守られているのはこのためです（オゾンホールの季節は薄くなります）。'],
+  cloud: ['雲に散乱された', '雲の水滴は可視光〜近赤外の光を強く散乱します。厚い雲でも一部の光は拡散光として通り抜けますが、多くは雲の中で進路を変えられます。'],
+  gas: ['水蒸気・CO₂の吸収帯に当たった', '赤外線には、水蒸気やCO₂が強く吸収する波長帯があります（940・1,130・1,380・1,870 nm付近など）。天文台が高く乾いた場所に作られるのは、この吸収を避けるためです。'],
+  scat: ['空気分子や塵に散乱された', '短い波長ほど散乱されやすいのがレイリー散乱です。一般式は 散乱の強さ ∝ λ⁻⁴。代入例：400 nm と 700 nm では (700/400)⁴ ≈ 9.4 倍、青い光のほうが散乱されやすく、空が青い理由になります。']
+};
+const FACT_AREA = '太陽が光子を全方向に出すとき、地球に届く割合は f = (R⊕ / 2d)²。R⊕ = 6,371 km、d = 1.496×10⁸ km を代入すると f ≈ (2.13×10⁻⁵)² ≈ 4.5×10⁻¹⁰、つまり約22億分の1です。それでも太陽は毎秒10⁴⁵個ほどの光子を出しているので、地球には毎秒10³⁵個規模が届きます（概算）。';
+
+function finishFinal() {
+  const env = T3.env, det = env.det, passedAll = T3.res.passed === 4;
+  T3.detected = passedAll && T3.rng() < D3.detectProb(det, env.site, T3.lam);
+  sfx(T3.detected ? 'win' : 'dull'); T3.state = 'final'; T3.fx.push({ x: 0.5, y: GROUND_Y, t: 0, kind: T3.detected ? 'ok' : 'miss' }); setStatus(T3.detected ? '検出された' : '検出されず'); updateHud3();
+  setTimeout(showResult3, 1300);
+}
+function showResult3() {
+  const r = T3.res, env = T3.env, det = env.det, passedAll = r.passed === 4, detected = passedAll && T3.detected;
+  const aim = Math.max(0, Math.round(400 * (1 - T3.b)) - 100 * T3.misses), sc = D3.score(aim, r.passed, det, detected), rank = D3.rankOf(sc);
+  J.s3 = sc; J.r3 = rank; J.site = env.site.name; J.recv = det.name; J.lam = T3.lam;
+  const dl = [['site', env.site.id, env.site.name], ['wx', env.weather.id, env.weather.name]]; if (passedAll) dl.push(['recv', det.id, det.name]); else dl.push(['loss', r.failed, LOSS_NAMES[r.failed]]);
+  const fresh = dexAdd(dl);
+  let best = 0, isNew = false;
+  try { best = +localStorage.getItem('photon_best3') || 0; if (sc > best) { isNew = best > 0; localStorage.setItem('photon_best3', String(sc)); best = sc; } } catch (e) { best = 0; }
+  let head, sub, body, fact;
+  if (!passedAll) { const f = r.failed, fp = r.layers[r.layers.length - 1].p; head = '大気で失われた…'; sub = REASON[f][0];
+    body = `<p>${REASON[f][0]}。${Math.round(T3.lam)} nm（${lamBand(T3.lam)}）の光子が「${D3.LAYERS.find(x => x.id === f).name}」を通り抜けられる確率は<b>${pc(fp)}</b>${fp >= 0.5 ? 'でしたが、運悪く失われました。' : 'で、この環境では厳しい波長でした。'}</p>`; fact = REASON[f][1]; }
+  else if (detected) { head = det.id === 'eye' ? '見えた！' : '検出された！'; sub = `${det.name}が光子を捉えた`; body = `<p>約8分19秒の旅の末、光子は${env.site.name}で<b>${det.name}</b>に届きました。</p>`; fact = FACT_AREA; }
+  else { head = '届いたけれど…'; sub = `${det.name}は光子を捉えられなかった`; body = `<p>大気は抜けましたが、${det.name}では検出されませんでした（この波長での検出確率は${pc(D3.detectProb(det, env.site, T3.lam))}）。</p>`; fact = FACT_AREA; }
+  $('card').innerHTML = `
+    <h1>${head}</h1><div class="sub">${sub}</div>${body}
+    <div class="score"><div class="big">${sc.toLocaleString()}<small> pts</small></div><div class="rank">ランク ${rank}${isNew ? '　<span class="new">NEW RECORD!</span>' : ''}</div>
+      <div class="brk"><span>照準の精度（ずれ ${(T3.b * 100).toFixed(0)}%・失敗 ${T3.misses} 回）</span><span>+${aim}</span><span>大気を通り抜けた層（${r.passed}／4）×200</span><span>+${r.passed * 200}</span><span>検出の価値</span><span>+${detected ? det.reward : 0}</span></div>
+      ${best ? `<div class="best">この端末でのベスト：${best.toLocaleString()} pts</div>` : ''}</div>
+    <div class="stats"><span class="k">光子の波長</span><span>${Math.round(T3.lam)} nm（${lamBand(T3.lam)}）</span><span class="k">降りた地点</span><span>${env.site.name}</span><span class="k">その日の天気</span><span>${env.weather.name}</span><span class="k">受けとめた先</span><span>${det.name}</span></div>
+    <div class="note"><b>補足</b>　${fact}</div>${newNote(fresh)}
+    ${J.s1 && J.s2 ? '<button id="jr">旅の総合結果を見る</button>' : ''}<button id="same3"${J.s1 && J.s2 ? ' class="sec"' : ''}>同じ光子でもう一度（環境は再抽選）</button><button id="new3" class="sec">新しい光子で（ステージ1から）</button>`;
+  $('ov').classList.add('on'); $('same3').onclick = () => startStage3(T3.lam); $('new3').onclick = newGame; if ($('jr')) $('jr').onclick = showJourney;
+}
+
+function s3Frame(dtMs) {
+  const sc = window.__timeScale || 1, dt = Math.min(dtMs, 50) / 1000 * sc, dms = dt * 1000, g = geom();
+  T3.tw += dt;
+  if (T3.state === 'flight') {
+    T3.ft += dt;
+    const rho = Math.min(g.R1, g.R1 * T3.ft / FLIGHT), a = T3.fired.a, P = polar(g, rho, a); T3.px = P.x; T3.py_ = P.y; T3.trail.push(P); if (T3.trail.length > 60) T3.trail.shift();
+    const t = T3.tw; let lost = null;
+    const mp = planetPos(g, 'mercury', t), vp = planetPos(g, 'venus', t);
+    if (Math.hypot(P.x - mp.x, P.y - mp.y) <= 9) lost = 'mercury';
+    else if (Math.hypot(P.x - vp.x, P.y - vp.y) <= 12) lost = 'venus';
+    else { const ep = earthPos(g, t), mo = moonPos(g, t); if (Math.hypot(P.x - ep.x, P.y - ep.y) < 4 * g.rE && Math.hypot(P.x - mo.x, P.y - mo.y) <= 11) lost = 'moon'; }
+    if (!lost) { const c = cometState(g, t), now = inTail(g, c, P); if (now && !T3.tail) { T3.tail = true; if (T3.rng() < 0.7) lost = 'comet'; } if (!now) T3.tail = false; }
+    if (T3.nu && lost && lost !== 'miss') { T3.ghosts[lost] = 1; lost = null; }
+    if (lost) loseInSpace(lost);
+    else if (rho >= g.R1) {
+      const ep = earthPos(g, t), d = Math.hypot(P.x - ep.x, P.y - ep.y);
+      if (d <= g.rE + 4) { const phi = sweepPhi(g, earthSpeed(g), T3.w.e, t), tx = -Math.sin(phi), ty = Math.cos(phi); arrive(Math.min(1, Math.abs((P.x - ep.x) * tx + (P.y - ep.y) * ty) / g.rE)); }
+      else loseInSpace('miss');
+    }
+  } else if (T3.state === 'arrive') { T3.at += dt; if (T3.at > 1.1) (T3.nu ? (T3.bAim = T3.b, T3.nuDet = D4.pick(D4.DETECTORS, T3.rng), startNuEarth()) : startDescent()); }
+  else if (T3.state === 'otravel') { T3.nt += dt; if (T3.nt > 3.4) finishOsc(); }
+  else if (T3.state === 'naim') { T3.nt += dt; T3.h -= TAU * dt / 36000; if (T3.nt > 45) nuCommit(); }
+  else if (T3.state === 'nsun') { T3.nt += dt; if (T3.nt > 3.8) nuAutoAim(); }
+  else if (T3.state === 'nearth') { T3.nt += dt; if (T3.nt > 3.4) nuDetect(); }
+  else if (T3.state === 'nfinal') { T3.nt += dt; if (T3.nt > 1.2) { T3.state = 'ndone'; showResultNu(); } }
+  else if (T3.state === 'descent') {
+    T3.pt += dms;
+    const ty = T3.i < 4 ? LAY_Y[T3.i] : GROUND_Y;
+    if (T3.ph === 'move') {
+      const u = Math.min(1, T3.pt / 700), e = u * u * (3 - 2 * u); T3.py = T3.y0 + (ty - T3.y0) * e;
+      if (u >= 1) { T3.ph = 'hold'; T3.pt = 0; if (T3.i < 4) { T3.shown = T3.i + 1; const ok = T3.res.layers[T3.i].ok; T3.fx.push({ x: 0.5, y: ty, t: 0, kind: ok ? 'pass' : 'fail' }); sfx(ok ? 'pass' : 'fail'); updateHud3(); } }
+    } else if (T3.i < 4) {
+      const ok = T3.res.layers[T3.i].ok;
+      if (!ok && T3.pt > 1400) { T3.state = 'dead'; showResult3(); }
+      else if (ok && T3.pt > 650) { T3.i++; T3.y0 = T3.py; T3.ph = 'move'; T3.pt = 0; }
+    } else if (T3.pt > 500) finishFinal();
+  }
+  T3.fx = T3.fx.filter(e => (e.t += Math.min(dtMs, 50)) < 1300);
+  if (T3.nu && (T3.state === 'nsun' || T3.state === 'birth' || T3.state === 'ldone')) drawSun(); else if (T3.nu && T3.state === 'npath') drawNuPath(); else if (T3.nu && T3.state === 'otune') drawOscTune(); else if (T3.nu && (T3.state === 'otravel' || T3.state === 'odone')) drawOscTravel(); else if (T3.nu && (T3.state === 'nearth' || T3.state === 'nfinal' || T3.state === 'ndone')) drawNuEarth(); else if (T3.nu && T3.state === 'naim') drawNuAim(); else if (['aim', 'flight', 'lost', 'arrive'].includes(T3.state)) drawSolar(g); else drawDescent();
+}
+
+// ---- 描画：太陽系 ----
+function drawSolar(g) {
+  const col = T3.nu ? [120, 230, 255] : photonRGB(T3.lam), t = T3.tw;
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+  const sunR = Math.min(W, H) * 0.30;
+  let gr = ctx.createRadialGradient(g.cx, g.y0, sunR * 0.4, g.cx, g.y0, sunR * 2.4);
+  gr.addColorStop(0, 'rgba(255,225,160,0.85)'); gr.addColorStop(0.35, 'rgba(255,170,80,0.35)'); gr.addColorStop(1, 'rgba(255,140,50,0)');
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(g.cx, g.y0, sunR * 2.4, 0, TAU); ctx.fill();
+  gr = ctx.createRadialGradient(g.cx, g.y0, 0, g.cx, g.y0, sunR); gr.addColorStop(0, '#fff6dc'); gr.addColorStop(0.8, '#ffd27a'); gr.addColorStop(1, '#ff9d3c');
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(g.cx, g.y0, sunR, 0, TAU); ctx.fill();
+  // 軌道
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  for (const [d, nm] of [[0.387, '水星の軌道'], [0.723, '金星の軌道'], [1, '地球の軌道']]) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.setLineDash([4, 6]); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(g.cx, g.y0, g.R1 * d, g.cen - g.hr - 0.15, g.cen + g.hr + 0.15); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillText(nm, 8, g.y0 + g.R1 * d * Math.sin(g.cen - g.hr - 0.1) - 4 + (d === 1 ? 0 : 0));
+  }
+  // 彗星（尾は太陽と反対向き）
+  const c = cometState(g, t), tailEnd = polar(g, c.r + c.len, c.phi);
+  const tg = ctx.createLinearGradient(c.head.x, c.head.y, tailEnd.x, tailEnd.y); tg.addColorStop(0, 'rgba(190,230,255,0.55)'); tg.addColorStop(1, 'rgba(190,230,255,0)');
+  const nx = -Math.sin(c.phi), ny = Math.cos(c.phi);
+  ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(c.head.x + nx * c.half, c.head.y + ny * c.half); ctx.lineTo(tailEnd.x + nx * c.half * 0.35, tailEnd.y + ny * c.half * 0.35); ctx.lineTo(tailEnd.x - nx * c.half * 0.35, tailEnd.y - ny * c.half * 0.35); ctx.lineTo(c.head.x - nx * c.half, c.head.y - ny * c.half); ctx.fill();
+  ctx.fillStyle = '#e6f4ff'; ctx.beginPath(); ctx.arc(c.head.x, c.head.y, 5, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(190,230,255,0.7)'; ctx.fillText('彗星', c.head.x + 9, c.head.y + 4);
+  // 惑星
+  for (const [k, nm, rad, colr] of [['mercury', '水星', 7, '#b9b2a8'], ['venus', '金星', 10, '#f0d9a0']]) {
+    const p = planetPos(g, k, t); ctx.fillStyle = colr; ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText(nm, p.x + rad + 4, p.y + 4);
+  }
+  // 地球と月
+  const u = sweepU(g, earthSpeed(g), T3.w.e, t), fade = Math.min(1, u / 0.05, (1 - u) / 0.05), ep = earthPos(g, t), mo = moonPos(g, t);
+  ctx.globalAlpha = fade;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ep.x, ep.y, 2.2 * g.rE, 0, TAU); ctx.stroke();
+  const eg = ctx.createRadialGradient(ep.x - g.rE * 0.3, ep.y - g.rE * 0.3, 2, ep.x, ep.y, g.rE);
+  eg.addColorStop(0, '#9fd0ff'); eg.addColorStop(0.6, '#2d6fc4'); eg.addColorStop(1, '#0f2f66');
+  ctx.fillStyle = 'rgba(120,190,255,0.22)'; ctx.beginPath(); ctx.arc(ep.x, ep.y, g.rE * 1.3, 0, TAU); ctx.fill();
+  ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ep.x, ep.y, g.rE, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#d8d8d8'; ctx.beginPath(); ctx.arc(mo.x, mo.y, 6, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.textAlign = 'center'; ctx.fillText('地球', ep.x, ep.y + g.rE + 16); ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('月', mo.x + 9, mo.y + 4);
+  ctx.globalAlpha = 1;
+  // 光が着くころの地球（予測リング）
+  if (T3.state === 'aim') {
+    const fp = earthPos(g, t + FLIGHT), fu = sweepU(g, earthSpeed(g), T3.w.e, t + FLIGHT), fa = Math.min(1, fu / 0.05, (1 - fu) / 0.05);
+    ctx.globalAlpha = fa; ctx.strokeStyle = 'rgba(255,227,168,0.9)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(fp.x, fp.y, g.rE, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,227,168,0.9)'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('光が着くころの地球', fp.x, fp.y - g.rE - 8); ctx.globalAlpha = 1;
+    // 照準線
+    const a = T3.aimA, s0 = polar(g, sunR * 0.95, a), s1 = polar(g, g.R1 * 1.1, a);
+    let lc = 'rgba(255,255,255,0.3)', msg = '';
+    if (T3.aimSet) { const pr = predictFlight(g, a);
+      const m = { hit: ['#7be08a', '命中コース'], miss: ['rgba(255,255,255,0.8)', '地球を外れそう（先を読もう）'], comet: ['#ffb347', '彗星の尾を通る（約70%で散乱）'], mercury: ['#ff6b5a', '水星に当たりそう'], venus: ['#ff6b5a', '金星に当たりそう'], moon: ['#ff6b5a', '月に当たりそう'] }[pr.kind];
+      lc = m[0]; msg = m[1]; if (T3.nu && (pr.kind === 'mercury' || pr.kind === 'venus' || pr.kind === 'moon' || pr.kind === 'comet')) { lc = 'rgba(120,230,255,0.9)'; msg = 'すり抜ける（ニュートリノは遮られない）'; } else if (pr.kind === 'mercury' || pr.kind === 'venus' || pr.kind === 'moon') { ctx.strokeStyle = '#ff6b5a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(pr.at.x, pr.at.y, 14, 0, TAU); ctx.stroke(); } }
+    ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke(); ctx.setLineDash([]);
+    if (msg) { ctx.font = '600 13px sans-serif'; const tw = ctx.measureText(msg).width + 24; ctx.fillStyle = 'rgba(5,6,13,0.72)'; ctx.beginPath(); ctx.roundRect(W / 2 - tw / 2, 62, tw, 26, 13); ctx.fill(); ctx.strokeStyle = lc; ctx.lineWidth = 1.5; ctx.stroke(); ctx.textAlign = 'center'; ctx.fillStyle = lc; ctx.fillText(msg, W / 2, 80); }
+    if (!T3.aimSet && !T3.nu) {                                 // 最初だけ「なぞって狙おう」の案内
+      const tt = performance.now() / 1000, rg = g.R1 * 0.8, sw = Math.sin(tt * 1.5) * g.hr * 0.8, pa = g.cen + sw, pp = polar(g, rg, pa);
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]); ctx.beginPath(); ctx.arc(g.cx, g.y0, rg, g.cen - g.hr * 0.9, g.cen + g.hr * 0.9); ctx.stroke(); ctx.setLineDash([]);
+      for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { const ph = ((tt * 1.3 - i * 0.28) % 1 + 1) % 1, a = g.cen + sd * (g.hr * 0.55 + i * 0.05 + ph * 0.03), q = polar(g, rg, a); chev(q.x, q.y, a + (sd > 0 ? 1 : -1) * Math.PI / 2, 9, 0.25 + 0.65 * Math.sin(ph * Math.PI)); }
+      const gd = ctx.createRadialGradient(pp.x, pp.y, 0, pp.x, pp.y, 22); gd.addColorStop(0, 'rgba(255,255,255,0.9)'); gd.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(pp.x, pp.y, 22, 0, TAU); ctx.fill();
+      ctx.font = '600 15px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.textAlign = 'center'; ctx.fillText('左右になぞって、地球に狙いを定めよう', W / 2, H * 0.5);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px sans-serif';
+    ctx.fillText(T3.aimSet ? '指（クリック）を離すと発射 ／ ← → で微調整、Spaceで発射' : '画面をなぞって向きを決めよう', W / 2, H - 44);
+  }
+  // 光子
+  if (T3.state === 'flight' || T3.state === 'arrive' || T3.state === 'lost') {
+    const a = T3.fired.a, head = T3.px !== undefined ? { x: T3.px, y: T3.py_ } : null;
+    if (head) {
+      ctx.strokeStyle = rgba(col, 0.55); ctx.lineWidth = 2; ctx.beginPath(); const s0 = polar(g, sunR * 0.95, a); ctx.moveTo(s0.x, s0.y); ctx.lineTo(head.x, head.y); ctx.stroke();
+      if (T3.state !== 'lost') { const gl = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 22); gl.addColorStop(0, rgba(col, 0.95)); gl.addColorStop(0.3, rgba(col, 0.45)); gl.addColorStop(1, rgba(col, 0)); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(head.x, head.y, 22, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(head.x, head.y, 3.5, 0, TAU); ctx.fill(); }
+    }
+  }
+  for (const e of T3.fx) if (e.abs) { const uu = e.t / 1300, cc = e.kind === 'fail' ? [255, 110, 80] : [255, 240, 170]; ctx.strokeStyle = rgba(cc, 1 - uu); ctx.lineWidth = 3 * (1 - uu) + 1; ctx.beginPath(); ctx.arc(e.x, e.y, 8 + uu * 70, 0, TAU); ctx.stroke(); }
+}
+
+// ---- 描画：大気の降下 ----
+function drawDescent() {
+  const env = T3.env, site = env.site, cx = W / 2, col = photonRGB(T3.lam), gy = GROUND_Y * H;
+  let g = ctx.createLinearGradient(0, 0, 0, gy);
+  g.addColorStop(0, '#02030a'); g.addColorStop(0.25, '#0a1a3a'); g.addColorStop(0.6, '#285a96'); g.addColorStop(1, '#a8cdf0');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, gy);
+  ctx.fillStyle = `rgba(150,90,230,${0.10 + 0.3 * Math.min(1, site.o3 / 320)})`; ctx.fillRect(0, H * 0.24, W, H * 0.12);
+  for (const c of T3.clouds) { ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.beginPath(); ctx.ellipse(c.x * W, c.y * H, c.w, c.w * 0.32, 0, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = `rgba(190,200,215,${0.06 + 0.4 * Math.min(1, site.pwv / 32)})`; ctx.fillRect(0, H * 0.55, W, H * 0.14);
+  ctx.fillStyle = `rgba(215,190,150,${Math.min(0.6, 0.04 + 0.9 * site.aer)})`; ctx.fillRect(0, H * 0.70, W, gy - H * 0.70);
+  const id = site.id;
+  if (id === 'antarctic') { ctx.fillStyle = '#e4eef7'; ctx.fillRect(0, gy, W, H - gy); }
+  else if (id === 'atacama') { ctx.fillStyle = '#9a6b43'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#7d5434'; ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W * 0.25, gy - 26); ctx.lineTo(W * 0.5, gy); ctx.lineTo(W * 0.8, gy - 18); ctx.lineTo(W, gy); ctx.fill(); }
+  else if (id === 'sahara') { ctx.fillStyle = '#d6a860'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#c4954d'; ctx.beginPath(); ctx.moveTo(0, gy); ctx.quadraticCurveTo(W * 0.3, gy - 30, W * 0.6, gy); ctx.quadraticCurveTo(W * 0.8, gy - 16, W, gy); ctx.fill(); }
+  else if (id === 'ocean') { ctx.fillStyle = '#1c4f86'; ctx.fillRect(0, gy, W, H - gy); ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5; for (let k = 0; k < 6; k++) { ctx.beginPath(); const y = gy + 10 + k * 12; for (let x = 0; x <= W; x += 20) ctx.lineTo(x, y + Math.sin((x + k * 40) * 0.05) * 3); ctx.stroke(); } }
+  else if (id === 'forest') { ctx.fillStyle = '#2f6b3a'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#245a30'; for (let k = 0; k < 16; k++) { const x = k * W / 15; ctx.beginPath(); ctx.moveTo(x - 14, gy + 2); ctx.lineTo(x, gy - 30 - (k % 3) * 8); ctx.lineTo(x + 14, gy + 2); ctx.fill(); } }
+  else { ctx.fillStyle = '#1b2230'; ctx.fillRect(0, gy, W, H - gy); const r = C.mulberry32(5); for (let k = 0; k < 14; k++) { const bw = 20 + r() * 26, bh = 20 + r() * 60, bx = k * W / 14; ctx.fillStyle = '#232c3f'; ctx.fillRect(bx, gy - bh, bw, bh); ctx.fillStyle = 'rgba(255,220,120,0.7)'; for (let wy = gy - bh + 6; wy < gy - 4; wy += 10) ctx.fillRect(bx + 5, wy, 4, 4); } }
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(site.name + '（' + env.weather.name + '）', 10, gy + 18);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('受けとめる先：' + env.det.name, 10, gy + 36);
+  // 今日の環境
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`天気：${env.weather.name}（${env.weather.note}）／ 天頂角 ${(Math.asin(Math.min(0.99, T3.b)) * 180 / Math.PI).toFixed(0)}°`, cx, H * 0.14);
+  D3.LAYERS.forEach((L, i) => {
+    const y = LAY_Y[i] * H, done = i < T3.shown, r = T3.res.layers[i];
+    ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 5;
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(L.name, 12, y - 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '10.5px sans-serif'; ctx.fillText(L.desc, 12, y - 5); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    if (done) { const ok = r.ok; ctx.fillStyle = ok ? 'rgba(60,180,100,0.9)' : 'rgba(220,70,60,0.92)'; const tw = 118; ctx.beginPath(); ctx.roundRect(W - tw - 12, y - 14, tw, 26, 13); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((ok ? '通過 ' : '失われた ') + pc(r.p), W - tw / 2 - 12, y + 4); }
+  });
+  if (T3.state !== 'dead') {
+    const py = (T3.state === 'final' ? GROUND_Y : T3.py) * H;
+    const gl = ctx.createRadialGradient(cx, py, 0, cx, py, 26); gl.addColorStop(0, rgba(col, 0.95)); gl.addColorStop(0.3, rgba(col, 0.5)); gl.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, py, 26, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, py, 4, 0, TAU); ctx.fill();
+  }
+  for (const e of T3.fx) if (!e.abs) { const u = e.t / 1300, c = e.kind === 'fail' || e.kind === 'miss' ? [255, 110, 80] : e.kind === 'ok' ? [255, 240, 170] : [120, 230, 160];
+    ctx.strokeStyle = rgba(c, 1 - u); ctx.lineWidth = 3 * (1 - u) + 1; ctx.beginPath(); ctx.arc(e.x * W, e.y * H, 8 + u * (e.kind === 'ok' ? 120 : 60), 0, TAU); ctx.stroke(); }
+}
+
+
+// ================= ニュートリノ編 =================
+function hud3Labels(nu) {
+  const k = document.querySelectorAll('#hud3 .k'), L = nu ? ['ニュートリノ ', '状況 ', 'エネルギー ', '出会った先 '] : ['光子の波長 ', '状況 ', '光子エネルギー ', '降りた先 '];
+  k.forEach((e, i) => { e.textContent = L[i]; });
+  $('lblL').textContent = nu ? '太陽の中心' : '太陽（光球）'; $('lblR').textContent = '観測者';
+}
+function updateHudNu() {
+  const b = T3.birth; $('h3Lam').textContent = b.rx.name; $('h3E').textContent = b.E == null ? '―' : b.E.toFixed(b.E < 1 ? 3 : 2) + (T3.src === 'sun' || T3.src === 'sn' ? ' MeV' : ' GeV');
+  $('h3Site').textContent = T3.nuDet && ['nearth', 'nfinal', 'ndone'].includes(T3.state) ? T3.nuDet.name : '―';
+  const prog = { npath: 0.05, otune: 0.3, otravel: 0.7, odone: 1, nsun: 0.1, aim: 0.3, flight: 0.45, lost: 0.45, arrive: 0.6, nearth: 0.8, nfinal: 1, ndone: 1, naim: 0.7 }[T3.state] || 0.3; $('fill').style.width = (prog * 100).toFixed(1) + '%';
+}
+// ================= ニュートリノ：粒子源・通り道・振動 =================
+const FL_ALL = { e: '電子型', mu: 'ミュー型', tau: 'タウ型', ae: '反電子型', x: 'ミュー／タウ型' };
+const SRC_NAME = { sun: '太陽', sn: '超新星爆発', atm: '大気', acc: '加速器' };
+function showCtl(rows, okLabel, onInput, onOk) {
+  const el = $('ctl'); el.innerHTML = rows.map(r => `<label>${r.label}　<b id="v_${r.id}"></b></label><input type="range" id="r_${r.id}" min="${r.min}" max="${r.max}" step="${r.step}" value="${r.value}">`).join('') + `<button id="ctlok">${okLabel}</button>`;
+  const vals = () => { const o = {}; rows.forEach(r => { o[r.id] = +$('r_' + r.id).value; }); return o; };
+  const upd = () => { const v = vals(); rows.forEach(r => { $('v_' + r.id).textContent = r.fmt ? r.fmt(v[r.id]) : v[r.id]; }); onInput(v); };
+  rows.forEach(r => $('r_' + r.id).addEventListener('input', upd)); $('ctlok').onclick = () => { const v = vals(); hideCtl(); onOk(v); };
+  el.classList.add('on'); document.body.classList.add('ctlon'); upd();
+}
+function hideCtl() { $('ctl').classList.remove('on'); document.body.classList.remove('ctlon'); }
+function nuBirth(src, rng) {
+  if (src === 'sn') return { rx: { id: 'sn', name: '超新星ニュートリノ', rare: 300, pee: 0.5, eq: '中性子星の誕生（陽子＋電子 → 中性子＋νe など）', note: '爆発のエネルギーの約99%はニュートリノが持ち去ります。' }, E: 10 + rng() * 20 };
+  if (src === 'atm') return { rx: { id: 'atm', name: '大気ニュートリノ', rare: 100, pee: 0.5, eq: '宇宙線 → π⁺ → μ⁺ + νμ', note: '宇宙線（主に陽子）が上空約15 kmで大気にぶつかって生まれます。' }, E: Math.exp(Math.log(0.4) + rng() * Math.log(8 / 0.4)) };
+  if (src === 'acc') return { rx: { id: 'acc', name: '加速器ニュートリノ', rare: 100, pee: 0.5, eq: '陽子ビーム → 標的 → π⁺ → μ⁺ + νμ', note: 'J-PARC（茨城県東海村）で作られ、岐阜県のスーパーカミオカンデへ向かいます（T2K実験）。' }, E: null };
+  return D4.birth(rng);
+}
+function startNeutrino(src) {
+  src = typeof src === 'string' ? src : 'sun'; hideCtl();
+  const rng = C.mulberry32((Math.random() * 4294967296) >>> 0), birth = nuBirth(src, rng);
+  setStage(3); hud3Labels(true);
+  T3 = { nu: true, src, far: src === 'sn', rng, birth, lam: 480, state: 'birth', tw: 0, nt: 0, misses: 0, aimA: Math.PI / 2, aimSet: false, ft: 0, fx: [], env: null, b: 0, am: 1, tail: false, fired: null, ghosts: {}, nuAng: -0.9 - rng() * 1.3, aE: rng() * TAU, p0: { x: 0, y: 0 }, s1: 0, pee: null, fl: src === 'sn' ? D4.snFlavor(rng) : null, nuSide: rng() < 0.5 ? -1 : 1 };
+  initWorld(); effects = []; setStatus('誕生'); updateHudNu();
+  const rx = birth.rx, Et = birth.E == null ? 'これから決める' : birth.E.toFixed(birth.E < 1 ? 3 : 2) + (src === 'sun' || src === 'sn' ? ' MeV' : ' GeV');
+  const intro = {
+    sun: `<p>核の中で <b>${rx.eq}</b> が起きて、電子ニュートリノが1個うまれました。光子は核から表面まで約10万年かかりましたが、ニュートリノは物質とほとんど反応しないので、太陽を数秒で抜けます。</p>`,
+    sn: `<p>大マゼラン雲（16.8万光年）で重い星が爆発しました。核が中性子星になる一瞬に、膨大な数のニュートリノが放たれます。あなたはその1個です（型：<b>${D4.SN_FL[T3.fl]}</b>）。1987年のSN 1987A では、この仲間をカミオカンデが捉えました。</p>`,
+    atm: `<p>宇宙から飛んできた粒子（宇宙線）が地球の大気にぶつかり、<b>ミュー型</b>のニュートリノが生まれました。このニュートリノは、地面の下にあるスーパーカミオカンデ（岐阜県）をめざして飛びます。</p>
+      <p>ニュートリノには、飛んでいる間に<b>別の型（タウ型）へ変身する</b>性質があります（ニュートリノ振動）。変身すると、ミュー型として検出される見込みは下がります。変身しやすさは、飛ぶ距離で変わります。</p>
+      <p>真上で生まれたなら約15 km。地球の裏側で生まれたなら、地球を丸ごと貫いて約12,800 km。今回どちらから来るかは運しだいです。</p>`,
+    acc: `<p>茨城県のJ-PARCで、陽子のビームを標的にぶつけて、<b>ミュー型</b>のニュートリノを人工的に作りました。これを岐阜県のスーパーカミオカンデへ向けて、地下を通して295 km飛ばします。</p>
+      <p>ニュートリノには、飛んでいる間に<b>別の型（タウ型）へ変身する</b>性質があります（ニュートリノ振動）。変身しやすさは、ニュートリノのエネルギーで変わります。今回のエネルギーは運しだいです。</p>`
+  }[src];
+  const go = '旅に出る';
+  $('card').innerHTML = `
+    <h1>ニュートリノが生まれた</h1><div class="sub">${SRC_NAME[src]} ― ${rx.name}</div>${intro}
+    <div class="stats"><span class="k">粒子源</span><span>${rx.name}</span><span class="k">エネルギー</span><span>${Et}</span>${rx.real ? `<span class="k">実際の割合</span><span>太陽のニュートリノのうち${rx.real}</span>` : ''}</div>
+    <div class="note"><b>補足</b>　${rx.note}${src === 'sun' ? '　ゲームでは、まれな反応（pep・⁸B）が出やすいように確率を上げています。' : ''}</div>
+    <button id="nugo">${go}</button><button id="nuback" class="sec">やめる</button>`;
+  $('ov').classList.add('on'); $('nuback').onclick = () => { setStage(1); showTitle(); };
+  $('nugo').onclick = () => { sfx('whoosh'); $('ov').classList.remove('on'); if (src === 'sun') nuAutoPath(); else if (src === 'sn') { T3.state = 'nsun'; T3.nt = 0; setStatus('星の中心を脱出中'); updateHudNu(); } else nuAutoOsc(); };
+}
+// ---------- 太陽内部の通り道 ----------
+function startNuPath() {
+  const b = T3.birth, z = b.rx.zone, aE = T3.aE; T3.state = 'npath'; T3.pos0 = 0; T3.thd = aE + (T3.rng() * 2 - 1) * 0.7;
+  setStatus('太陽内部の通り道'); updateHudNu();
+  const aeDeg = aE * 180 / Math.PI;
+  showCtl([
+    { id: 'pos', label: '生まれる位置（反対側 ⟷ 地球側）', min: -z, max: z, step: 0.002, value: 0, fmt: v => (v / z * 100).toFixed(0) + '%' },
+    { id: 'th', label: '進む向き', min: aeDeg - 70, max: aeDeg + 70, step: 0.5, value: T3.thd * 180 / Math.PI, fmt: v => (((v % 360) + 360) % 360).toFixed(0) + '°' }
+  ], 'この道で出発', v => { T3.pos0 = v.pos; T3.thd = v.th * Math.PI / 180; }, () => {
+    const p0 = { x: T3.pos0 * Math.cos(aE), y: T3.pos0 * Math.sin(aE) }, eps = angDiff(T3.thd, aE), m = D4.columnAlong(p0.x, p0.y, T3.thd);
+    Object.assign(T3, { p0, eps, m, s1: D4.pathScore(eps, m), pee: D4.peePath(b.rx, m), nuAng: T3.thd, state: 'nsun', nt: 0 });
+    setStatus('太陽を脱出中'); updateHudNu();
+    toast(`物質を通る量 ×${m.toFixed(2)}、向きのずれ ${(Math.abs(eps) * 180 / Math.PI).toFixed(0)}°`, 3200);
+  });
+  toast('地球の方向（黄色い点）に線を合わせよう。地球側で生まれるほど物質が少なく、核の反対側だと中心を通って電子型が減ります', 7000);
+}
+function drawNuPath() {
+  const VW = (W > H * 1.3 && H < 560) ? W * 0.56 : W;
+  const cx = VW / 2, cy = H * 0.34, R = Math.min(VW * 0.36, H * 0.22), z = T3.birth.rx.zone, aE = T3.aE;
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+  for (const [f, c] of [[1, '#ff9d3c'], [0.7, '#ffb85a'], [0.25, '#fff0b8']]) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, TAU); ctx.fill(); }
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(60,30,0,0.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R * z, 0, TAU); ctx.stroke();
+  const rr = D4.resonanceR(T3.birth.E); if (rr) { ctx.strokeStyle = 'rgba(160,60,200,0.9)'; ctx.beginPath(); ctx.arc(cx, cy, R * rr, 0, TAU); ctx.stroke(); } ctx.setLineDash([]);
+  const ex = cx + Math.cos(aE) * R * 1.3, ey = cy + Math.sin(aE) * R * 1.3;
+  ctx.setLineDash([2, 5]); ctx.strokeStyle = 'rgba(255,227,120,0.5)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#ffe37a'; ctx.beginPath(); ctx.arc(ex, ey, 6, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,227,120,0.95)'; ctx.font = '600 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('地球の方向', ex, ey - 11);
+  const p0 = { x: T3.pos0 * Math.cos(aE), y: T3.pos0 * Math.sin(aE) }, th = T3.thd, bx = cx + p0.x * R, by = cy + p0.y * R;
+  ctx.strokeStyle = 'rgba(120,230,255,0.95)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(th) * R * 1.9, by + Math.sin(th) * R * 1.9); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, by, 4.5, 0, TAU); ctx.fill();
+  const m = D4.columnAlong(p0.x, p0.y, th), pee = D4.peePath(T3.birth.rx, m);
+  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = '600 14px sans-serif'; ctx.fillText('太陽の中の通り道', cx, H * 0.1 + 6);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  const y0 = cy + R + 24; ctx.fillText(`通る物質の量 ×${m.toFixed(2)}　（核の中心から抜けると×1）`, cx, y0);
+  ctx.fillText(`電子型で地球に届く確率　${(pee * 100).toFixed(0)}%`, cx, y0 + 18);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px sans-serif';
+  ctx.fillText(`破線の円＝この反応が生まれる範囲${rr ? '　紫の円＝MSW共鳴の半径' : ''}`, cx, y0 + 36);
+}
+// ---------- ニュートリノ振動（大気・加速器） ----------
+function startOsc() {
+  T3.state = 'otune'; T3.cz = 0.2; T3.Eg = 0.6; const acc = T3.src === 'acc', rows = [];
+  setStatus('振動の谷をねらう'); updateHudNu();
+  if (acc) rows.push({ id: 'e', label: 'エネルギー E（GeV）※ビームの向きの調整で変えられる', min: Math.log(0.2), max: Math.log(3), step: 0.005, value: Math.log(1.5), fmt: v => Math.exp(v).toFixed(2) + ' GeV' });
+  else rows.push({ id: 'cz', label: '来る向き：−1＝地球の裏側から ／ ＋1＝真上から', min: -1, max: 1, step: 0.004, value: 0.6, fmt: v => `cosθ ${v.toFixed(2)}（${Math.round(D4.atmL(v)).toLocaleString()} km）` });
+  showCtl(rows, 'この条件で行く', v => { if (acc) T3.Eg = Math.exp(v.e); else T3.cz = v.cz; }, () => {
+    const E = acc ? T3.Eg : T3.birth.E, L = acc ? 295 : D4.atmL(T3.cz), P = D4.pEff(L, E, acc ? 0.18 : 0.25);
+    Object.assign(T3, { oE: E, oL: L, oP: P, state: 'otravel', nt: 0 }); if (acc) T3.birth.E = E; setStatus('地球の中を進んでいる'); updateHudNu();
+  });
+  toast(acc ? 'グラフの谷（νμが消える所）にスライダーを合わせよう。谷＝νμがντに変わって見えなくなる' : 'このニュートリノのエネルギーに合う谷（L/E ≈ 500, 1500, …）の向きをねらおう', 6500);
+}
+function oscCur() { return T3.src === 'acc' ? { L: 295, E: T3.Eg } : { L: D4.atmL(T3.cz), E: T3.birth.E }; }
+function drawOscTune() {
+  const VW = (W > H * 1.3 && H < 560) ? W * 0.56 : W;
+  const acc = T3.src === 'acc', x0 = VW * 0.1, x1 = VW * 0.92, y0 = H * 0.2, y1 = H * 0.46;
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+  ctx.fillStyle = '#0c1630'; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+  const f = u => acc ? [Math.exp(Math.log(0.2) + u * Math.log(3 / 0.2)), 295] : null;
+  ctx.strokeStyle = 'rgba(120,230,255,0.95)'; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i <= 300; i++) { const u = i / 300; let P; if (acc) { const [E, L] = f(u); P = D4.pEff(L, E, 0.18); } else { P = D4.pEff(D4.atmL(-1 + 2 * u), T3.birth.E, 0.25); } const x = x0 + u * (x1 - x0), y = y1 - P * (y1 - y0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+  const cur = oscCur(), P = D4.pEff(cur.L, cur.E, acc ? 0.18 : 0.25), u = acc ? Math.log(cur.E / 0.2) / Math.log(3 / 0.2) : (T3.cz + 1) / 2, mx = x0 + u * (x1 - x0), my = y1 - P * (y1 - y0);
+  ctx.strokeStyle = 'rgba(255,227,120,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(mx, y0); ctx.lineTo(mx, y1); ctx.stroke(); ctx.fillStyle = '#ffe37a'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, TAU); ctx.fill();
+  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = '600 14px sans-serif'; ctx.fillText(acc ? '加速器ニュートリノ：J-PARC → スーパーカミオカンデ（295 km）' : '大気ニュートリノ：どの向きから来るか', VW / 2, H * 0.1 + 4);
+  ctx.font = '11px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('縦軸：νμのまま届く確率（上＝そのまま、下＝ντに変わって見えない）', VW / 2, y0 - 8);
+  ctx.fillText(acc ? '横軸：エネルギー 0.2 → 3 GeV（対数）' : '横軸：来る向き（左＝裏側から、右＝真上から）', VW / 2, y1 + 15);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; const y = y1 + 40;
+  ctx.fillText(`今の条件：L = ${Math.round(cur.L).toLocaleString()} km、E = ${cur.E.toFixed(2)} GeV、L/E = ${Math.round(cur.L / cur.E).toLocaleString()} km/GeV`, VW / 2, y);
+  ctx.fillText(`νμのまま届く確率 ${(P * 100).toFixed(0)}%　／　ντに変わる確率 ${((1 - P) * 100).toFixed(0)}%`, VW / 2, y + 18);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px sans-serif'; ctx.fillText('谷＝ L/E ≈ 500 km/GeV の奇数倍（振動の山）。式：P = 1 − sin²(1.267 Δm² L/E)', VW / 2, y + 36);
+}
+function drawOscTravel() {
+  const VW = (W > H * 1.3 && H < 560) ? W * 0.56 : W;
+  const cx = VW / 2, cy = H * 0.46, R = Math.min(VW, H) * 0.34, u = Math.min(1, T3.nt / 3), e = u * u * (3 - 2 * u), acc = T3.src === 'acc';
+  const alpha = 2 * Math.asin(Math.min(1, T3.oL / (2 * 6371))), sg = T3.nuSide, a0 = -Math.PI / 2 + sg * alpha;
+  const s0 = { x: cx + R * Math.cos(a0), y: cy + R * Math.sin(a0) }, k0 = { x: cx, y: cy - R };
+  const chord = Math.hypot(s0.x - k0.x, s0.y - k0.y), K = Math.min(4000, Math.max(1, Math.min(VW, H) * 0.55 / Math.max(chord, 0.3)));
+  const mid = { x: (s0.x + k0.x) / 2, y: (s0.y + k0.y) / 2 }, tg = { x: VW / 2, y: H * 0.5 }, t = 1 - 1 / K, S0 = { x: mid.x + (tg.x - mid.x) * t, y: mid.y + (tg.y - mid.y) * t };
+  const T = p => ({ x: S0.x + K * (p.x - mid.x), y: S0.y + K * (p.y - mid.y) });
+  const ec = T({ x: cx, y: cy }), cols = ['#3a7bc8', '#a0522d', '#e0a050', '#ffe9a0'], rr = [1, 0.895, 0.546, 0.19];
+  bgCache('osc' + Math.round(T3.oL) + T3.nuSide, () => {
+    ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+    for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+    for (let i = 0; i < 4; i++) { ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(ec.x, ec.y, R * K * rr[i], 0, TAU); ctx.fill(); }
+  });
+  const src = T(s0), sk = T(k0), px = src.x + (sk.x - src.x) * e, py = src.y + (sk.y - src.y) * e;
+  ctx.strokeStyle = 'rgba(120,230,255,0.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(src.x, src.y); ctx.lineTo(px, py); ctx.stroke();
+  drawGlow(px, py, 18);
+  ctx.fillStyle = '#ffe37a'; ctx.beginPath(); ctx.arc(sk.x, sk.y, 5, 0, TAU); ctx.fill(); ctx.textAlign = 'center'; ctx.font = '11px sans-serif'; ctx.fillText('スーパーカミオカンデ', sk.x, sk.y - 12);
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(src.x, src.y, 4, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillText(acc ? '茨城・J-PARC' : '生まれた場所', src.x, src.y + (src.y < H * 0.5 ? -12 : 20));
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '600 14px sans-serif'; ctx.fillText(`${Math.round(T3.oL).toLocaleString()} km を飛んでいる（ほぼ光の速さ）`, VW / 2, H * 0.1 + 6);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(`ミュー型のまま届く確率 ${(T3.oP * 100).toFixed(0)}%　／　タウ型に変身 ${((1 - T3.oP) * 100).toFixed(0)}%`, VW / 2, H * 0.1 + 26);
+  if (K > 1.5) { ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '11px sans-serif'; ctx.fillText(`地球の一部を約${Math.round(K)}倍に拡大して表示（地面の下を通っています）`, VW / 2, H * 0.92); }
+}
+function finishOsc() {
+  const P = T3.oP, osc = T3.rng() > P, det = !osc && T3.rng() < 0.9, rx = T3.birth.rx, acc = T3.src === 'acc';
+  sfx(osc ? 'shimmer' : det ? 'win' : 'dull');
+  const fresh = dexAdd([['nrx', rx.id, rx.name], ['nosc', osc ? 'osc' : 'surv', osc ? 'νμ→ντ に変わった' : 'νμのまま届いた']].concat(det ? [['ndet', 'sk', 'スーパーカミオカンデ']] : []));
+  const head = osc ? 'タウ型に変身した！' : det ? 'ミュー型のまま届き、検出された' : 'ミュー型のまま届いたが、検出されなかった';
+  const sub = osc ? '飛んでいる間に、ミュー型から別の型に変わった' : det ? 'スーパーカミオカンデが反応を捉えた' : 'スーパーカミオカンデの中を通り抜けた';
+  const fact = acc
+    ? 'T2K実験は、J-PARCからスーパーカミオカンデへ飛ばしたミュー型ニュートリノが、途中で別の型に変わる様子を測っています。'
+    : '1998年、スーパーカミオカンデは「地球の裏側から来る大気ニュートリノは、真上から来るものより少ない」ことを示しました。飛ぶ距離で数が変わる＝ニュートリノ振動の証拠で、梶田隆章さんの2015年ノーベル物理学賞につながりました。';
+  const E = T3.oE, L = T3.oL;
+  hideCtl();
+  $('card').innerHTML = `
+    <h1>${head}</h1><div class="sub">${sub}</div>
+    <p>${acc ? 'J-PARCから' : '大気で生まれて'} <b>${Math.round(L).toLocaleString()} km</b> を、エネルギー <b>${E.toFixed(2)} GeV</b> で飛びました。この条件でミュー型のまま届く確率は <b>${(P * 100).toFixed(0)}%</b>、タウ型に変身する確率は <b>${((1 - P) * 100).toFixed(0)}%</b> でした。${osc ? '今回は変身する側が出ました。' : '今回は変身せずに届きました。'}</p>
+    <div class="note"><b>補足</b>　${fact}<br>確率は、ミュー型とタウ型の2種類だけで考える近似式 P = 1 − sin²(1.267 × Δm² × L ÷ E) で計算しています。Δm² = 0.0025、L = ${Math.round(L).toLocaleString()}、E = ${E.toFixed(2)} を入れると、エネルギーのぼやけを無視した値は ${D4.pSurvive(L, E).toFixed(2)} です。ゲームではぼやけを平均した ${P.toFixed(2)} を使っています。</div>${newNote(fresh)}
+    <button id="again4">もう一度運試し</button><button id="dex4" class="sec">図鑑を見る</button><button id="toT" class="sec">タイトルへ</button>`;
+  $('ov').classList.add('on'); T3.state = 'odone';
+  T3.cardHTML = $('card').innerHTML; T3.cardBind = () => { $('again4').onclick = luckStart; $('dex4').onclick = () => showDex(finishOscCard, 'n'); $('toT').onclick = () => { setStage(1); showTitle(); }; }; T3.cardBind();
+}
+function finishOscCard() { $('card').innerHTML = T3.cardHTML; T3.cardBind(); $('ov').classList.add('on'); }
+function luckStart() { resetJ(); startNeutrino(D4.SOURCES[(Math.random() * D4.SOURCES.length) | 0].id); }
+function showNeutrinoMenu() {
+  $('card').innerHTML = `<h1>ニュートリノの運試し</h1><div class="sub">おまけ ― すべてランダム</div>
+    <p>ニュートリノは物質をほとんど素通りします。どこで生まれ、どんな道を通り、どこで捉えられるか（あるいは捉えられないか）は、ほとんど確率しだい。操作は要りません。</p>
+    <ul><li>生まれ方は、太陽・超新星・大気・加速器のどれか</li><li>通り道も、行き先も、すべてランダム</li><li>地球で検出器に捉えられたら大当たり</li></ul>
+    <button id="luck">ニュートリノを放つ</button><button id="back0" class="sec">もどる</button>`;
+  $('ov').classList.add('on'); $('luck').onclick = luckStart; $('back0').onclick = showTitle;
+}
+// ---------- 自動進行（運試し）----------
+const gauss = rng => { let u = 0; for (let i = 0; i < 6; i++) u += rng(); return (u - 3) / 0.707; };
+function nuAutoPath() {
+  const b = T3.birth, z = b.rx.zone, aE = T3.aE, rng = T3.rng, pos = (rng() * 2 - 1) * z, eps = gauss(rng) * 0.25, th = aE + eps;
+  const p0 = { x: pos * Math.cos(aE), y: pos * Math.sin(aE) }, m = D4.columnAlong(p0.x, p0.y, th);
+  Object.assign(T3, { p0, eps, m, s1: D4.pathScore(eps, m), pee: D4.peePath(b.rx, m), nuAng: th, state: 'nsun', nt: 0 });
+  setStatus('太陽を脱出中'); updateHudNu();
+}
+function nuAutoAim() {
+  const rng = T3.rng; T3.bAim = rng() * 0.5; T3.b = T3.bAim;
+  if (rng() < 0.1) { T3.state = 'ldone'; setStatus('地球を外れた'); showLostNu(); return; }
+  T3.nuDet = D4.pick(D4.DETECTORS, rng); toast('地球に到着！', 1800); startNuEarth();
+}
+function nuAutoOsc() {
+  const acc = T3.src === 'acc', rng = T3.rng;
+  const E = acc ? Math.exp(Math.log(0.2) + rng() * Math.log(15)) : T3.birth.E, L = acc ? 295 : D4.atmL(rng() * 2 - 1), P = D4.pEff(L, E, acc ? 0.18 : 0.25);
+  Object.assign(T3, { oE: E, oL: L, oP: P, state: 'otravel', nt: 0 }); if (acc) T3.birth.E = E; setStatus('地球の中を進んでいる'); updateHudNu(); sfx('shimmer');
+}
+
+function drawSun() {
+  const sn = T3.src === 'sn', cx = W / 2, cy = H * 0.46, R = Math.min(W, H) * 0.36, u = Math.min(1, T3.nt / 3.4), e = u * u * (3 - 2 * u), a = T3.nuAng, p0 = T3.p0 || { x: 0, y: 0 };
+  const dx = Math.cos(a), dy = Math.sin(a), bq = p0.x * dx + p0.y * dy, exitLen = -bq + Math.sqrt(Math.max(0, bq * bq - (p0.x * p0.x + p0.y * p0.y - 1))), tot = exitLen + 0.45, tr = tot * e;
+  bgCache('sun' + sn, () => {
+    ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+    for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+    const layers = sn ? [[1, '#5a6fd8', '水素の外層'], [0.7, '#8fa0f0', '酸素・ケイ素の層'], [0.25, '#e8f0ff', '鉄の核']] : [[1, '#ff9d3c', '対流層'], [0.7, '#ffb85a', '放射層'], [0.25, '#fff0b8', '核']];
+    for (const [f, c] of layers) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, TAU); ctx.fill(); }
+    ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(20,20,40,0.75)';
+    ctx.fillText(layers[2][2], cx, cy + R * 0.25 - 6); ctx.fillText(layers[1][2], cx, cy - R * 0.5); ctx.fillText(layers[0][2], cx, cy - R * 0.86);
+  });
+  ctx.textAlign = 'center';
+  if (!sn) { const j = Math.sin(T3.nt * 17) * 2.2, k = Math.cos(T3.nt * 13) * 2.2; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + R * 0.05 + j, cy - R * 0.04 + k, 3, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillText(sn ? '光は星の物質に閉じ込められ、脱出は数時間後（ニュートリノのほうが先に届く）' : '核の中の白い点 ＝ 同じころ生まれた光子（脱出まで約10万年）', cx, cy + R + 28);
+  const sx = cx + p0.x * R, sy = cy + p0.y * R, nx = sx + dx * tr * R, ny = sy + dy * tr * R;
+  ctx.strokeStyle = 'rgba(120,230,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(nx, ny); ctx.stroke();
+  drawGlow(nx, ny, 22); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(nx, ny, 3.5, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '600 15px sans-serif';
+  if (sn) { ctx.fillText(`ニュートリノの経過 ${(Math.min(tr, exitLen) / exitLen * 10).toFixed(1)} 秒`, cx, H * 0.14); ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('超新星のニュートリノは約10秒間にわたって放たれる', cx, H * 0.14 + 20); }
+  else { ctx.fillText(`ニュートリノの経過 ${(Math.min(tr, exitLen) * 2.32).toFixed(2)} 秒`, cx, H * 0.14); ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('太陽の半径 6.96×10⁵ km ÷ 光速 3.0×10⁵ km/s ≈ 2.3 秒', cx, H * 0.14 + 20); }
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.textAlign = 'center'; ctx.fillText('何にも邪魔されずに、ほぼ光の速さで通り抜ける', cx, H * 0.9);
+}
+function startNuEarth() {
+  sfx('rumble'); T3.state = 'nearth'; T3.nt = 0; if (T3.src !== 'sn') T3.fl = D4.flavorAtEarth(T3.birth.rx, T3.rng, T3.pee); T3.cr = D4.crossed(T3.b);
+  setStatus('地球を貫通中'); updateHudNu();
+  toast(`地球の中心から ${(T3.b * 100).toFixed(0)}% ずれた位置を貫通します`, 2600);
+}
+function startNuAim() {
+  const rng = T3.rng; T3.bAim = T3.b; T3.state = 'naim'; T3.nt = 0; T3.h = rng() * TAU; T3.dec = (rng() * 2 - 1) * 0.409;
+  T3.rlo = 0; T3.rhi = 1; T3.mk = { a: rng() * TAU, r: T3.bAim }; T3.dragging = false;
+  setStatus('検出器をねらう'); updateHudNu();
+  toast('太陽から見た地球。円＝検出器。ニュートリノの通る位置を動かし、検出器に重ねて指を離そう（地球は自転します）', 6500);
+}
+function nuMark() { return { x: T3.mk.r * Math.cos(T3.mk.a), y: T3.mk.r * Math.sin(T3.mk.a) }; }
+function nuDetPos() { return D4.DETECTORS.filter(d => d.id !== 'none').map(d => Object.assign({ d }, D4.project(d.lat, d.lon, T3.h, T3.dec))); }
+function setMarkFromPointer(px, py) {
+  const R = Math.min(W, H) * 0.36, x = (px - W / 2) / R, y = -(py - H * 0.5) / R;
+  T3.mk.a = Math.atan2(y, x); T3.mk.r = Math.max(T3.rlo, Math.min(T3.rhi, Math.hypot(x, y)));
+}
+function nuCommit() {
+  if (!T3 || T3.state !== 'naim') return;
+  const m = nuMark(); let best = null;
+  for (const q of nuDetPos()) { const dd = Math.hypot(q.x - m.x, q.y - m.y); if (dd < D4.HIT_R && (!best || dd < best.dd)) best = { q, dd }; }
+  T3.nuDet = best ? best.q.d : D4.DETECTORS[0]; T3.hitSide = best ? best.q.side : 0;
+  T3.b = T3.mk.r; T3.nuSide = Math.cos(T3.mk.a) >= 0 ? 1 : -1; startNuEarth();
+}
+cv.addEventListener('pointerdown', e => { if (stage === 3 && T3 && T3.state === 'naim') { T3.dragging = true; setMarkFromPointer(e.clientX, e.clientY); } });
+cv.addEventListener('pointermove', e => { if (stage === 3 && T3 && T3.state === 'naim' && T3.dragging) setMarkFromPointer(e.clientX, e.clientY); });
+cv.addEventListener('pointerup', e => { if (stage === 3 && T3 && T3.state === 'naim' && T3.dragging) { setMarkFromPointer(e.clientX, e.clientY); T3.dragging = false; nuCommit(); } });
+function drawNuAim() {
+  const cx = W / 2, cy = H * 0.5, R = Math.min(W, H) * 0.36, h = T3.h, dec = T3.dec, E = T3.birth.E;
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+  ctx.fillStyle = '#10264a'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
+  ctx.lineWidth = 1;
+  const line = (pts) => { for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; ctx.strokeStyle = (a.side + b.side) > 0 ? 'rgba(158,200,255,0.38)' : 'rgba(158,200,255,0.12)'; ctx.beginPath(); ctx.moveTo(cx + a.x * R, cy - a.y * R); ctx.lineTo(cx + b.x * R, cy - b.y * R); ctx.stroke(); } };
+  for (let lat = -60; lat <= 60; lat += 30) { const pts = []; for (let lo = -180; lo <= 180; lo += 6) pts.push(D4.project(lat, lo, h, dec)); line(pts); }
+  for (let lo = -180; lo < 180; lo += 30) { const pts = []; for (let la = -90; la <= 90; la += 6) pts.push(D4.project(la, lo, h, dec)); line(pts); }
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+  ctx.textAlign = 'center';
+  for (const q of nuDetPos()) {
+    const d = q.d, ok = D4.detectProb(d, E, 'e') > 0, x = cx + q.x * R, y = cy - q.y * R, col = ok ? '255,220,120' : '150,160,185';
+    ctx.strokeStyle = `rgba(${col},0.95)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, D4.HIT_R * R, 0, TAU); ctx.stroke();
+    const sn = { sk: 'SK', sno: 'SNO', bx: 'BX', ga: 'Ga', ice: 'IceCube' }[d.id];
+    ctx.fillStyle = `rgba(${col},0.95)`; ctx.font = '600 11px sans-serif'; ctx.fillText(sn, x, y - D4.HIT_R * R - 4);
+    ctx.font = '10px sans-serif'; ctx.fillStyle = `rgba(${col},0.8)`; ctx.fillText((ok ? '○' : '×') + (q.side > 0 ? '昼' : '夜'), x, y + D4.HIT_R * R + 12);
+  }
+  const m = nuMark(), mx = cx + m.x * R, my = cy - m.y * R;
+  ctx.strokeStyle = 'rgba(120,230,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mx, my, 9, 0, TAU); ctx.moveTo(mx - 15, my); ctx.lineTo(mx + 15, my); ctx.moveTo(mx, my - 15); ctx.lineTo(mx, my + 15); ctx.stroke();
+  const ut = ((12 - h * 180 / Math.PI / 15) % 24 + 24) % 24, hh = Math.floor(ut), mm = Math.floor((ut - hh) * 60);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = '600 14px sans-serif'; ctx.fillText('地球で検出器をねらう', cx, H * 0.1 + 6);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(`世界時 ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}（地球は自転中）　太陽の赤緯 ${(dec * 180 / Math.PI).toFixed(0)}°`, cx, H * 0.1 + 24);
+  ctx.fillText('ドラッグで通る位置を動かし、円に重ねて指を離す', cx, cy + R + 32);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '11px sans-serif';
+  ctx.fillText('○＝感度あり　×＝感度なし　昼／夜＝太陽から見て手前／裏', cx, cy + R + 50);
+  ctx.fillText('SK＝スーパーカミオカンデ　BX＝ボレクシーノ　Ga＝ガリウム検出器', cx, cy + R + 66);
+}
+function nuDetect() {
+  const p = T3.src === 'sn' ? D4.snDetect(T3.nuDet, T3.fl) : D4.detectProb(T3.nuDet, T3.birth.E, T3.fl); T3.detected = T3.rng() < p; T3.detP = p; T3.state = 'nfinal'; T3.nt = 0;
+  T3.fx.push({ x: 0.5, y: 0.82, t: 0, kind: T3.detected ? 'ok' : 'miss' }); sfx(T3.detected ? 'win' : 'dull'); setStatus(T3.detected ? '検出された' : '素通りした'); updateHudNu();
+}
+const FL_NAME = FL_ALL;
+function drawNuEarth() {
+  const cx = W / 2, cy = H * 0.46, R = Math.min(W, H) * 0.36, u = Math.min(1, T3.nt / 3.4) * (T3.state === 'nfinal' ? 1 : 1), b = T3.b * T3.nuSide;
+  const nm = ['地殻', 'マントル', '外核（液体）', '内核（固体）'];
+  bgCache('nuearth', () => {
+    ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+    for (const s of stars3) { ctx.fillStyle = `rgba(255,255,255,${s.a * 0.5})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+    const cols = ['#3a7bc8', '#a0522d', '#e0a050', '#ffe9a0'], rr = [1, 0.895, 0.546, 0.19];
+    for (let i = 0; i < 4; i++) { ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(cx, cy, R * rr[i], 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.moveTo(cx, cy - R * 1.3); ctx.lineTo(cx, cy + R * 1.3); ctx.stroke(); ctx.setLineDash([]);
+  });
+  const x = cx + b * R, half = R * Math.sqrt(Math.max(0, 1 - b * b)), y0 = cy - R * 1.3, y1 = cy + R * 1.3, y = y0 + (y1 - y0) * u;
+  ctx.strokeStyle = 'rgba(120,230,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y); ctx.stroke();
+  drawGlow(x, y, 20); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, TAU); ctx.fill();
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  for (let i = 0; i < 4; i++) { const ok = T3.cr[i]; ctx.fillStyle = ok ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.35)'; ctx.fillText((ok ? '✓ ' : '× ') + nm[i], 12, H * 0.62 + 18 * i + 46); }
+  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '600 14px sans-serif';
+  ctx.fillText(`地球をまっすぐ貫通中（${Math.round(2 * half / R * 6371)} km ・減衰はほぼゼロ）`, cx, H * 0.1);
+  ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(`${T3.nuDet.id === 'none' ? '出口の先：海・岩盤' : '出口の先：' + T3.nuDet.name}`, cx, H * 0.1 + 20);
+  if (T3.state === 'nfinal') { ctx.fillStyle = T3.detected ? 'rgba(255,240,170,0.95)' : 'rgba(255,255,255,0.8)'; ctx.font = '600 15px sans-serif'; ctx.fillText(T3.detected ? '検出された！' : '何も起きず、通り過ぎた', cx, cy + R + 30); }
+  for (const e of T3.fx) { const uu = e.t / 1300, c = e.kind === 'ok' ? [255, 240, 170] : [255, 110, 80]; ctx.strokeStyle = rgba(c, 1 - uu); ctx.lineWidth = 3 * (1 - uu) + 1; ctx.beginPath(); ctx.arc(x, y1, 8 + uu * (e.kind === 'ok' ? 120 : 50), 0, TAU); ctx.stroke(); }
+}
+function showLostNu() {
+  $('card').innerHTML = `
+    <h1>地球を外れた…</h1><div class="sub">ニュートリノは宇宙へ飛び去った</div>
+    <p>ニュートリノは惑星も月も彗星の尾も素通りしますが、地球そのものを外すと何にも出会えません。運が悪かったようです。</p>
+    <div class="note"><b>補足</b>　実際には太陽ニュートリノは全方向に出ています。地球に届くのは、そのうちごく一部です。</div>
+    <button id="again4">もう一度運試し</button><button id="toT" class="sec">タイトルへ</button>`;
+  $('ov').classList.add('on'); $('again4').onclick = luckStart; $('toT').onclick = () => { setStage(1); showTitle(); };
+}
+const NU_FACT = {
+  sk: 'スーパーカミオカンデは、水中でニュートリノが電子をはじき飛ばしたときに出る淡い青い光（チェレンコフ光）を、1万本以上の光電子増倍管で捉えます。小柴昌俊さんが超新星ニュートリノを捉えた装置の後継で、太陽ニュートリノの観測では、太陽がある方向から来ることも確かめられました。',
+  sno: 'SNOは重水を使い、全ての型のニュートリノに反応する中性カレント反応も測りました。「太陽のニュートリノは消えたのではなく、別の型に変わっていた」ことを示した決定的な観測です（2015年ノーベル物理学賞は梶田隆章さんとアーサー・マクドナルドさん）。',
+  bx: 'ボレクシーノは液体シンチレータで、pp・⁷Be・pep など低エネルギーの太陽ニュートリノを個別に測りました。',
+  ga: 'ガリウム検出器は、ニュートリノがガリウムを変える反応を使います。しきい値が低いので、太陽の主役のpp反応のニュートリノを捉えられる数少ない装置でした。電子型にしか反応しません。',
+  ice: 'アイスキューブは TeV 以上の高エネルギーニュートリノ用です。太陽の核反応で出るニュートリノは数 MeV 以下なので、ここでは何も起きません。',
+  none: 'ニュートリノは1秒間に1 cm²あたり約650億個（6.5×10¹⁰）も地球に降り注いでいます。あなたの体も毎秒数千億個が通り抜けますが、ほとんど何も起きません（概算）。'
+};
+function showResultNu() {
+  const b = T3.birth, det = T3.nuDet, ncr = T3.cr.filter(Boolean).length;
+  const gh = Object.keys(T3.ghosts), dl = [['nrx', b.rx.id, b.rx.name], ['nfl', T3.fl, FL_NAME[T3.fl]], ['ndet', det.id, det.name]]; gh.forEach(k => dl.push(['ngh', k, { mercury: '水星', venus: '金星', moon: '月', comet: '彗星の尾' }[k]]));
+  const fresh = dexAdd(dl);
+  const head = T3.detected ? (det.id === 'sno' ? '振動の証拠をつかんだ！' : '捉えられた！') : '地球を素通りした…';
+  const sub = T3.detected ? `${det.name}が反応を検出` : (det.id === 'none' ? '何にも出会わずに地球を抜けた' : `${det.name}の中を通ったが、反応しなかった`);
+  const pdesc = det.id === 'none' || (det.id === 'ice' && T3.src !== 'sn') ? '（この出口の先に、このエネルギーを捉える検出器はありません）' : `（この検出器・エネルギー・${FL_NAME[T3.fl]}での反応確率は${pc(T3.detP)}）`;
+  $('card').innerHTML = `
+    <h1>${head}</h1><div class="sub">${sub}</div>
+    <p>${b.rx.name}で生まれた ${b.E.toFixed(b.E < 1 ? 3 : 2)} MeV のニュートリノ${T3.src === 'sn' ? 'は、' : `は、太陽内部の通り道で電子型のまま届く確率が ${(T3.pee * 100).toFixed(0)}% になっていて、`}地球には<b>${FL_NAME[T3.fl]}</b>として届きました${T3.src === 'sun' && T3.fl !== 'e' ? '（物質効果とニュートリノ振動で、電子型からミュー型・タウ型に変わる）' : ''}。${pdesc}</p>
+    <div class="stats"><span class="k">すり抜けた天体</span><span>${gh.length ? gh.map(k => ({ mercury: '水星', venus: '金星', moon: '月', comet: '彗星の尾' }[k])).join('・') : 'なし'}</span><span class="k">出会った先</span><span>${det.name}</span>${det.place ? `<span class="k">場所</span><span>${det.place}</span>` : ''}</div>
+    <div class="note"><b>補足</b>　${NU_FACT[det.id]}<br>光子は約8分19秒＋大気で多くが失われるのに対し、ニュートリノは太陽も地球も貫通します。</div>${newNote(fresh)}
+    <button id="again4">もう一度運試し</button><button id="dex4" class="sec">図鑑を見る</button><button id="toT" class="sec">タイトルへ</button>`;
+  $('ov').classList.add('on');
+  T3.cardHTML = $('card').innerHTML; T3.cardBind = () => { $('again4').onclick = luckStart; $('dex4').onclick = () => showDex(finishOscCard, 'n'); $('toT').onclick = () => { setStage(1); showTitle(); }; };
+  T3.cardBind();
+}
+window.__nuT = () => ({ pos: nuDetPos(), lo: T3.rlo, hi: T3.rhi });
+window.__T3 = () => T3;
+window.__nu = () => T3 && T3.nu && ({ src: T3.src, oP: T3.oP, state: T3.state, birth: T3.birth, b: T3.b, det: T3.nuDet && T3.nuDet.id, fl: T3.fl, detected: T3.detected });
+
+// ================= 旅の総合結果と図鑑 =================
+let J = {};
+function resetJ() { J = {}; }
+const DEX_KEY = 'photon_dex_v1';
+const BAND_NAMES = ['紫外線', '可視光', '近赤外線', '赤外線'];
+const LOSS_NAMES = { o3: 'オゾン層で吸収', cloud: '雲で散乱', gas: '水蒸気・CO₂の吸収帯', scat: '空気分子・塵で散乱', miss: '地球を外れた', mercury: '水星に遮られた', venus: '金星に遮られた', moon: '月に遮られた（日食）', comet: '彗星の尾で散乱' };
+const DEX_CATS = [
+  ['band', '波長帯（ステージ2）', () => BAND_NAMES.map(n => [n, n])],
+  ['site', '降りた地点', () => D3.SITES.map(x => [x.id, x.name])],
+  ['wx', '天気・大気の状態', () => D3.WEATHERS.map(x => [x.id, x.name])],
+  ['recv', '光を受けとめた先', () => D3.DETECTORS.map(x => [x.id, x.name])],
+  ['nrx', 'ニュートリノ：生まれ方', () => D4.REACTIONS.map(x => [x.id, x.name]).concat([['sn', '超新星ニュートリノ'], ['atm', '大気ニュートリノ'], ['acc', '加速器ニュートリノ']])],
+  ['nfl', 'ニュートリノ：届いた型', () => [['e', '電子型'], ['mu', 'ミュー型'], ['tau', 'タウ型'], ['ae', '反電子型'], ['x', 'ミュー／タウ型']]],
+  ['nosc', 'ニュートリノ：振動の結果', () => [['osc', 'νμ→ντ に変わった'], ['surv', 'νμのまま届いた']]],
+  ['ndet', 'ニュートリノ：出会った検出器', () => D4.DETECTORS.map(x => [x.id, x.name])],
+  ['ngh', 'ニュートリノ：すり抜けた天体', () => [['mercury', '水星'], ['venus', '金星'], ['moon', '月'], ['comet', '彗星の尾']]],
+  ['loss', '失われ方（ステージ3）', () => Object.keys(LOSS_NAMES).map(k => [k, LOSS_NAMES[k]])]
+];
+function dexLoad() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DEX_KEY)) || {};
+    if (!localStorage.getItem('photon_dexfix1')) {   // 旧バグ（結果画面の再描画で毎フレーム加算）で水増しされたニュートリノ項目を ×1 に戻す
+      for (const c of ['nrx', 'nfl', 'ndet', 'ngh']) if (d[c]) for (const k in d[c]) d[c][k] = 1;
+      localStorage.setItem(DEX_KEY, JSON.stringify(d)); localStorage.setItem('photon_dexfix1', '1');
+    }
+    return d;
+  } catch (e) { return {}; }
+}
+function dexAdd(list) {   // list: [[cat,id,name],...] → 新規登録の名前を返す
+  const d = dexLoad(), fresh = [];
+  for (const [c, id, nm] of list) { d[c] = d[c] || {}; if (!d[c][id]) fresh.push(nm); d[c][id] = (d[c][id] || 0) + 1; }
+  try { localStorage.setItem(DEX_KEY, JSON.stringify(d)); } catch (e) {}
+  return fresh;
+}
+const newNote = f => f.length ? `<div class="note"><b>図鑑に新登録</b>　${f.join('、')}</div>` : '';
+function totalRank(t) { return t >= 5700 ? 'S' : t >= 5100 ? 'A' : t >= 4400 ? 'B' : 'C'; }
+const DEX_TABS = { p: ['band', 'site', 'wx', 'recv', 'loss'], n: ['nrx', 'nfl', 'nosc', 'ndet', 'ngh'] };
+let dexTab = 'p';
+function showDex(back, tab) {
+  if (tab) dexTab = tab;
+  const d = dexLoad(), tally = t => { let got = 0, all = 0; for (const [c, , f] of DEX_CATS) if (DEX_TABS[t].includes(c)) for (const [id] of f()) { all++; if ((d[c] || {})[id]) got++; } return [got, all]; };
+  const [pg, pa] = tally('p'), [ng, na] = tally('n'), [got, all] = tally(dexTab);
+  const secs = DEX_CATS.filter(([c]) => DEX_TABS[dexTab].includes(c)).map(([c, title, f]) => `<div class="dexh">${title}</div><div class="dex">${f().map(([id, nm]) => { const n = (d[c] || {})[id];
+      return n ? `<span class="chip on">${nm}<small> ×${n}</small></span>` : `<span class="chip">？</span>`; }).join('')}</div>`).join('');
+  $('card').innerHTML = `<h1>図鑑</h1>
+    <div class="tabs"><button id="tabp" class="${dexTab === 'p' ? 'on' : ''}">光子 ${pg}/${pa}</button><button id="tabn" class="${dexTab === 'n' ? 'on' : ''}">ニュートリノ ${ng}/${na}</button></div>
+    <div class="sub">${dexTab === 'p' ? '光子の旅' : 'ニュートリノの旅'}で集めた記録 ${got} ／ ${all}</div>${secs}
+    <div class="note"><b>補足</b>　${dexTab === 'p' ? 'ステージ2・3で出会った波長・地点・天気・受けとめた先・失われ方が記録されます。' : 'ニュートリノの旅で出会った生まれ方・届いた型・検出器・すり抜けた天体・振動の結果が記録されます。'}（この端末のブラウザに保存）</div>
+    <button id="dexback">もどる</button>`;
+  $('ov').classList.add('on'); $('dexback').onclick = back; $('tabp').onclick = () => showDex(back, 'p'); $('tabn').onclick = () => showDex(back, 'n');
+}
+function showJourney() {
+  const a = J.s1 || 0, b = J.s2 || 0, c = J.s3 || 0, t = a + b + c, rank = totalRank(t); sfx(rank === 'C' ? 'dull' : 'fanfare');
+  let best = 0, isNew = false;
+  try { best = +localStorage.getItem('photon_best_total') || 0; if (t > best) { isNew = best > 0; localStorage.setItem('photon_best_total', String(t)); best = t; } } catch (e) { best = 0; }
+  $('card').innerHTML = `
+    <h1>旅の総合結果</h1><div class="sub">太陽の中心 → 地球へ</div>
+    <div class="score"><div class="big">${t.toLocaleString()}<small> pts</small></div><div class="rank">総合ランク ${rank}${isNew ? '　<span class="new">NEW RECORD!</span>' : ''}</div>
+      <div class="brk"><span>ステージ1 放射層（${J.r1 || '-'}）</span><span>+${a}</span><span>ステージ2 対流層（${J.r2 || '-'}）</span><span>+${b}</span><span>ステージ3 太陽系→地球（${J.r3 || '-'}）</span><span>+${c}</span></div>
+      ${best ? `<div class="best">この端末でのベスト：${best.toLocaleString()} pts</div>` : ''}</div>
+    <div class="stats"><span class="k">光子の波長</span><span>${Math.round(J.lam)} nm（${lamBand(J.lam)}）</span><span class="k">降りた地点</span><span>${J.site}</span><span class="k">受けとめた先</span><span>${J.recv}</span></div>
+    <div class="note"><b>補足</b>　総合ランクは 3ステージの合計点で決まります（S≥5,700／A≥5,100／B≥4,400）。例：${a.toLocaleString()} + ${b.toLocaleString()} + ${c.toLocaleString()} = ${t.toLocaleString()} pts。</div>
+    <button id="jshare" class="sec">Xで共有</button><button id="jnew">もう一度、新しい旅へ</button><button id="jneu" class="sec">ニュートリノになる</button><button id="jdex" class="sec">図鑑を見る</button><button id="jtitle" class="sec">タイトルに戻る</button>`;
+  $('jshare').onclick = () => {
+    const txt = `光子になって、太陽の中心から地球まで旅しました☀️→🌍\n${Math.round(J.lam)} nm（${lamBand(J.lam)}）の光子が ${J.site} の${J.recv}に届いた！\n総合 ${t.toLocaleString()} pts／ランク ${rank}\n#光子の旅`;
+    const u = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(txt);
+    const w = window.open(u, '_blank', 'noopener'); if (!w) location.href = u;
+  };
+  $('ov').classList.add('on'); $('jnew').onclick = newGame; $('jdex').onclick = () => showDex(showJourney, 'p'); $('jneu').onclick = () => { setStage(1); showNeutrinoMenu(); }; $('jtitle').onclick = () => { setStage(1); showTitle(); };
+}
+
+// カードの中身が変わったら先頭から表示する（前のカードのスクロール位置を引き継がない）
+new MutationObserver(() => { const c = $('card'); c.scrollTop = 0; requestAnimationFrame(() => { c.scrollTop = 0; }); }).observe($('card'), { childList: true });
+G.anim = null;
+showTitle(); requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
