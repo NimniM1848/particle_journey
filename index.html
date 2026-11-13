@@ -1811,8 +1811,8 @@ function showJourney() {
     <button id="jshare" class="sec">Xで共有</button><button id="jnew">もう一度、新しい旅へ</button><button id="jneu" class="sec">ニュートリノになる</button><button id="jdex" class="sec">図鑑を見る</button><button id="jtitle" class="sec">タイトルに戻る</button>`;
   $('jshare').onclick = () => {
     const txt = `光子になって、太陽の中心から地球まで旅しました☀️→🌍\n${Math.round(J.lam)} nm（${lamBand(J.lam)}）の光子が ${J.site} の${J.recv}に届いた！\n総合 ${t.toLocaleString()} pts／ランク ${rank}\n#光子の旅`;
-    const u = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(txt) + '&url=' + encodeURIComponent('https://nimnim1848.github.io/particle_journey/');
-    const w = window.open(u, '_blank', 'noopener'); if (!w) location.href = u;
+    const u = 'https://x.com/intent/post?text=' + encodeURIComponent(txt) + '&url=' + encodeURIComponent('https://nimnim1848.github.io/particle_journey/');
+    const el = document.createElement('a'); el.href = u; el.target = '_blank'; el.rel = 'noopener noreferrer'; document.body.appendChild(el); el.click(); el.remove();
   };
   $('ov').classList.add('on'); $('jnew').onclick = newGame; $('jdex').onclick = () => showDex(showJourney, 'p'); $('jneu').onclick = () => { setStage(1); showNeutrinoMenu(); }; $('jtitle').onclick = () => { setStage(1); showTitle(); };
 }
